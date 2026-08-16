@@ -1,0 +1,9 @@
+# dados pessoais nunca vão para o repositório
+planner-dados.json
+planner-backup-*.json
+*.local.json
+
+node_modules/
+.vercel
+.DS_Store
+Thumbs.db
