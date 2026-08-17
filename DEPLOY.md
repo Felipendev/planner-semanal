@@ -315,15 +315,21 @@ Clique em **Salvar e conectar**.
 
 #### Forma recomendada — e-mail e senha *(não envia e-mail nenhum)*
 
-1. **Primeiro, no Supabase** (uma vez só):
-   **Authentication → Sign In / Providers → Email** →
+**Se você AINDA NÃO entrou em nenhum aparelho:**
+
+1. No Supabase, uma vez só: **Authentication → Sign In / Providers → Email** →
    **desmarque "Confirm email"** → *Save*
+2. No app: preencha e-mail e senha → **Criar acesso**
+3. No celular: mesma tela, mesma senha → **Entrar**
 
-   > Sem isso o Supabase manda um e-mail de confirmação ao criar a conta,
-   > e você volta ao mesmo problema de limite.
+**Se você JÁ entrou por link de e-mail** (é o caso mais comum depois do primeiro
+acesso): a conta existe, mas **não tem senha**. Os campos de login não aparecem
+porque você já está autenticado. Faça assim:
 
-2. **No app:** preencha e-mail e senha e clique em **Criar acesso**
-3. **No celular:** mesma tela, mesma senha, clique em **Entrar**
+1. No computador já conectado: **Nuvem** → caixa verde
+   **"Senha para entrar nos outros aparelhos"**
+2. Digite uma senha → **Definir senha**
+3. No celular: **Conectar** → mesmo e-mail, essa senha → **Entrar**
 
 Pronto. Nada é enviado por e-mail, então não existe limite a estourar.
 
@@ -480,6 +486,7 @@ Em ambos os casos, o arquivo que vai para o ar é `web/index.html`.
 |---|---|
 | Login abre e volta sem entrar | A URL da Vercel não foi autorizada no passo 1.4 |
 | `rate limit` ao pedir o link | O SMTP embutido do Supabase manda poucas mensagens por hora. **Use e-mail e senha** (passo 3.3) |
+| Não vejo os campos de e-mail e senha | Você já está logado neste aparelho. Use a caixa **"Senha para entrar nos outros aparelhos"** |
 | `Email not confirmed` ao entrar | Desmarque *Confirm email* em Authentication → Sign In / Providers → Email |
 | Link do e-mail não chega | Verifique o lixo eletrônico |
 | `requested path is invalid` | O **Site URL** foi salvo sem `https://` — passo 1.4 |

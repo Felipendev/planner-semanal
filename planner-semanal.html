@@ -629,6 +629,9 @@ input[type=checkbox]{width:auto;}
 .cent{display:flex;flex-wrap:wrap;gap:7px;align-items:center;}
 .cent input{flex:1;min-width:150px;}
 .cou{font-size:11.5px;color:var(--ink3);}
+.senhabox{border:1px solid var(--accent);border-radius:8px;padding:12px 13px;margin-bottom:14px;
+  background:var(--accent-soft);}
+.senhabox .nfh{margin-bottom:4px;}
 .verbox{display:flex;align-items:center;gap:10px;justify-content:space-between;
   font-size:11.5px;color:var(--ink3);margin-bottom:12px;padding-bottom:11px;
   border-bottom:1px solid var(--line2);}
@@ -4109,7 +4112,7 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden) checkAle
      · registros (conclusões, água, leitura, dias fechados)
        → UNIÃO, nunca sobrescrita. É o dado que dói perder.
    ═══════════════════════════════════════════════════════ */
-const APP_VER='2026-08-16.4';
+const APP_VER='2026-08-16.5';
 const CLOUD_KEY='planner_cloud';
 let sb=null, sbUser=null, cloudState='off', cloudTimer=null, cloudPending=false, provs=null;
 
@@ -4376,6 +4379,18 @@ function nuvemModal(){
         <button class="b sm line" id="cNow">Sincronizar agora</button>
         <button class="b sm line" id="cShare">Configurar outro aparelho</button>`:''}
     </div>
+    ${sbUser?`
+    <div class="senhabox">
+      <div class="nfh">Senha para entrar nos outros aparelhos</div>
+      <p class="nfp">Você entrou por link de e-mail, então esta conta ainda não tem senha.
+      Defina uma aqui e use no celular — assim você nunca mais depende de e-mail nem esbarra em limite.</p>
+      <div class="cent">
+        <input id="cNew" type="password" placeholder="mínimo 6 caracteres" autocomplete="new-password">
+        <button class="b sm solid" id="cSet">Definir senha</button>
+      </div>
+    </div>` : ''}
+    <div style="display:none">
+    </div>
     <label class="fld"><span>URL do projeto Supabase</span>
       <input id="cU" value="${esc(c.url)}" placeholder="https://xxxx.supabase.co"></label>
     <label class="fld"><span>Chave pública do projeto</span>
@@ -4408,6 +4423,15 @@ function nuvemModal(){
     } if(window.caches){ const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); }
     }catch(e){}
     location.reload(true); };
+  const bSet=md.querySelector('#cSet');
+  if(bSet) bSet.onclick=async()=>{
+    const pw=md.querySelector('#cNew').value;
+    if(!pw||pw.length<6){ alert('A senha precisa de pelo menos 6 caracteres.'); return; }
+    bSet.disabled=true; bSet.textContent='…';
+    const {error}=await sb.auth.updateUser({password:pw});
+    if(error){ alert('Não deu: '+error.message); bSet.disabled=false; bSet.textContent='Definir senha'; }
+    else { shut(); toast('Senha definida. No celular, use este mesmo e-mail e senha em <b>Entrar</b>.',true); }
+  };
   const sh=md.querySelector('#cShare');
   if(sh) sh.onclick=()=>{
     const url=linkConfig();
