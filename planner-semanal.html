@@ -4109,7 +4109,7 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden) checkAle
      · registros (conclusões, água, leitura, dias fechados)
        → UNIÃO, nunca sobrescrita. É o dado que dói perder.
    ═══════════════════════════════════════════════════════ */
-const APP_VER='2026-08-16.3';
+const APP_VER='2026-08-16.4';
 const CLOUD_KEY='planner_cloud';
 let sb=null, sbUser=null, cloudState='off', cloudTimer=null, cloudPending=false, provs=null;
 
@@ -4200,6 +4200,37 @@ async function cloudLogin(){
   if(error) alert('Não deu para entrar com Google: '+error.message+
     '\n\nUse o link por e-mail.');
 }
+/** Senha: não envia e-mail nenhum, então não esbarra em limite. */
+async function cloudSenha(email,senha,criar){
+  if(!sb) return false;
+  const fn = criar ? sb.auth.signUp({email,password:senha})
+                   : sb.auth.signInWithPassword({email,password:senha});
+  const {data,error}=await fn;
+  if(error){
+    const m=error.message||'';
+    if(/already registered|already exists/i.test(m))
+      return cloudSenha(email,senha,false);          // já existe: tenta entrar
+    if(/Email not confirmed/i.test(m))
+      alert('O Supabase está exigindo confirmação por e-mail.\n\n'+
+        'Desligue em: Authentication → Sign In / Providers → Email →\n'+
+        'desmarque "Confirm email" → Save.\n\nDepois tente de novo.');
+    else if(/Invalid login credentials/i.test(m))
+      alert('E-mail ou senha não conferem.\n\n'+
+        'Se é a primeira vez neste projeto, use "Criar acesso" em vez de "Entrar".');
+    else if(/rate limit|too many/i.test(m))
+      alert('Limite do Supabase atingido. Aguarde alguns minutos.');
+    else alert('Não deu: '+m);
+    return false;
+  }
+  if(criar && data && data.user && !data.session){
+    alert('Conta criada, mas o Supabase pediu confirmação por e-mail.\n\n'+
+      'Desligue "Confirm email" em Authentication → Sign In / Providers → Email\n'+
+      'e depois use "Entrar".');
+    return false;
+  }
+  return true;
+}
+
 /** Link mágico: dispensa qualquer configuração no Google Cloud. */
 async function cloudLoginEmail(email){
   if(!sb) return;
@@ -4316,14 +4347,26 @@ function nuvemModal(){
         ? 'Suas marcações vão para o Supabase e aparecem em qualquer aparelho onde você entrar.'
         : 'Sem nuvem o planner funciona normalmente, mas cada aparelho guarda os seus próprios dados.'}</p>
       ${sb&&!sbUser?`
+      <label class="fld" style="margin-bottom:8px"><span>E-mail</span>
+        <input id="cEm" type="email" placeholder="seu@email.com" value="${esc((cloudCfg()||{}).ultimoEmail||'')}"></label>
+      <label class="fld" style="margin-bottom:8px"><span>Senha</span>
+        <input id="cPw" type="password" placeholder="mínimo 6 caracteres" autocomplete="current-password"></label>
       <div class="cent">
-        <input id="cEm" type="email" placeholder="seu@email.com" value="${esc((cloudCfg()||{}).ultimoEmail||'')}">
-        <button class="b sm solid" id="cMail">Enviar acesso por e-mail</button>
+        <button class="b sm solid" id="cIn">Entrar</button>
+        <button class="b sm line" id="cUp">Criar acesso</button>
       </div>
-      <div class="cent" style="margin-top:7px">
-        <input id="cCod" placeholder="ou cole aqui o código de 6 dígitos" inputmode="numeric" maxlength="8">
-        <button class="b sm line" id="cVer">Entrar</button>
-      </div>
+      <p class="nfp" style="margin:9px 0 0">Senha não envia e-mail — é a forma que não esbarra em limite.
+      Use a mesma no celular. <b>Primeira vez:</b> clique em <i>Criar acesso</i>.</p>
+      <details style="margin-top:10px">
+        <summary style="font-size:11.5px;color:var(--ink3);cursor:pointer">outras formas de entrar</summary>
+        <div class="cent" style="margin-top:9px">
+          <button class="b sm line" id="cMail">Link por e-mail</button>
+          <input id="cCod" placeholder="código de 6 dígitos" inputmode="numeric" maxlength="8" style="min-width:120px">
+          <button class="b sm line" id="cVer">Usar código</button>
+        </div>
+        <p class="nfp" style="margin:7px 0 0">O e-mail do Supabase gratuito manda poucas mensagens por hora.
+        Se aparecer <i>rate limit</i>, use a senha acima.</p>
+      </details>
       ${provs&&provs.google
         ? `<div style="margin-top:9px"><button class="b sm line" id="cLogin">ou entrar com Google</button></div>`
         : `<p class="nfp" style="margin:9px 0 0">O login com Google não está habilitado neste projeto.
@@ -4393,6 +4436,20 @@ function nuvemModal(){
         getSelection().removeAllRanges(); getSelection().addRange(r); }); };
   md.querySelector('#cX').onclick=shut;
   const l=md.querySelector('#cLogin'); if(l) l.onclick=cloudLogin;
+  const entrar=async(criar)=>{
+    const e=md.querySelector('#cEm').value.trim(), pw=md.querySelector('#cPw').value;
+    if(!e||!pw){ alert('Preencha e-mail e senha.'); return; }
+    if(pw.length<6){ alert('A senha precisa de pelo menos 6 caracteres.'); return; }
+    const b=md.querySelector(criar?'#cUp':'#cIn'); const txt=b.textContent;
+    b.disabled=true; b.textContent='…';
+    const ok=await cloudSenha(e,pw,criar);
+    if(ok){ const c=cloudCfg()||{}; c.ultimoEmail=e; setCloudCfg(c); shut(); toast('Conectado.'); }
+    else { b.disabled=false; b.textContent=txt; }
+  };
+  const bIn=md.querySelector('#cIn'); if(bIn) bIn.onclick=()=>entrar(false);
+  const bUp=md.querySelector('#cUp'); if(bUp) bUp.onclick=()=>entrar(true);
+  const pwf=md.querySelector('#cPw');
+  if(pwf) pwf.onkeydown=ev=>{ if(ev.key==='Enter') entrar(false); };
   const vv=md.querySelector('#cVer');
   if(vv) vv.onclick=async()=>{
     const email=md.querySelector('#cEm').value.trim();

@@ -313,24 +313,29 @@ Clique em **Salvar e conectar**.
 
 ### 3.3 Entrar na conta
 
-Digite seu e-mail e clique em **Enviar acesso por e-mail**. Você recebe uma
-mensagem com **duas formas** de entrar:
+#### Forma recomendada — e-mail e senha *(não envia e-mail nenhum)*
 
-**a) Clicar no link** — abre o app já autenticado.
+1. **Primeiro, no Supabase** (uma vez só):
+   **Authentication → Sign In / Providers → Email** →
+   **desmarque "Confirm email"** → *Save*
 
-**b) Código de 6 dígitos** — copie o código do e-mail, cole no segundo campo da
-janela e clique em **Entrar**.
+   > Sem isso o Supabase manda um e-mail de confirmação ao criar a conta,
+   > e você volta ao mesmo problema de limite.
 
-> O código existe por um motivo prático: alguns servidores de e-mail
-> *pré-visitam* os links das mensagens por segurança, e como o link do Supabase
-> é de uso único, ele já chega gasto. Quando isso acontece você vê
-> `otp_expired` mesmo tendo acabado de recebê-lo. O código não tem esse problema.
->
-> Se o seu e-mail só mostrar o link e não o código, dá para incluí-lo:
-> **Supabase → Authentication → Emails → Magic Link**, e acrescente
-> `{{ .Token }}` ao corpo da mensagem.
+2. **No app:** preencha e-mail e senha e clique em **Criar acesso**
+3. **No celular:** mesma tela, mesma senha, clique em **Entrar**
 
-Ambos valem por **1 hora** e só podem ser usados **uma vez**.
+Pronto. Nada é enviado por e-mail, então não existe limite a estourar.
+
+#### Alternativa — link ou código por e-mail
+
+Fica em *"outras formas de entrar"*, recolhido. Funciona, mas o serviço de
+e-mail embutido do Supabase gratuito manda **pouquíssimas mensagens por hora**.
+Se você vir `rate limit`, é isso — e a saída é a senha acima.
+
+> Se quiser mesmo usar e-mail sem limite, dá para configurar um SMTP próprio em
+> **Project Settings → Authentication → SMTP Settings** (Resend, Brevo e Gmail
+> servem). Mas para dois aparelhos, senha resolve e é mais simples.
 
 ### 3.4 Conferir
 
@@ -474,7 +479,9 @@ Em ambos os casos, o arquivo que vai para o ar é `web/index.html`.
 | Sintoma | Causa provável |
 |---|---|
 | Login abre e volta sem entrar | A URL da Vercel não foi autorizada no passo 1.4 |
-| Link do e-mail não chega | Verifique o lixo eletrônico. O Supabase gratuito envia poucos e-mails por hora |
+| `rate limit` ao pedir o link | O SMTP embutido do Supabase manda poucas mensagens por hora. **Use e-mail e senha** (passo 3.3) |
+| `Email not confirmed` ao entrar | Desmarque *Confirm email* em Authentication → Sign In / Providers → Email |
+| Link do e-mail não chega | Verifique o lixo eletrônico |
 | `requested path is invalid` | O **Site URL** foi salvo sem `https://` — passo 1.4 |
 | `otp_expired` logo após receber | O link foi consumido pelo antivírus do e-mail. Use o **código de 6 dígitos** |
 | Botão da nuvem vermelho | Chave errada, ou o `schema.sql` não foi executado |
