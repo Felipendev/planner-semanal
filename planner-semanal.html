@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="apple-touch-icon" href="icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+<script src="config.js"></script>
 <style>
 :root{
   --paper:#fbfaf8; --surface:#fff; --sunken:#f4f2ee;
@@ -4108,7 +4109,7 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden) checkAle
      · registros (conclusões, água, leitura, dias fechados)
        → UNIÃO, nunca sobrescrita. É o dado que dói perder.
    ═══════════════════════════════════════════════════════ */
-const APP_VER='2026-08-16.2';
+const APP_VER='2026-08-16.3';
 const CLOUD_KEY='planner_cloud';
 let sb=null, sbUser=null, cloudState='off', cloudTimer=null, cloudPending=false, provs=null;
 
@@ -4120,7 +4121,32 @@ function perigosa(k){
   return false;
 }
 function cloudCfg(){
-  try{ return JSON.parse(localStorage.getItem(CLOUD_KEY)||'null'); }catch(e){ return null; }
+  try{
+    const local=JSON.parse(localStorage.getItem(CLOUD_KEY)||'null');
+    if(local&&local.url&&local.key) return local;
+  }catch(e){}
+  const g=window.PLANNER_CFG;                 // padrão embutido no site
+  if(g&&g.url&&g.key) return {url:g.url,key:g.key};
+  return null;
+}
+/** Link que já leva a configuração — evita digitar a chave no celular. */
+function linkConfig(){
+  const c=cloudCfg(); if(!c) return '';
+  const pacote=btoa(unescape(encodeURIComponent(JSON.stringify({u:c.url,k:c.key}))));
+  return location.origin+location.pathname+'#cfg='+pacote;
+}
+function lerConfigDaURL(){
+  const m=(location.hash||'').match(/[#&]cfg=([^&]+)/);
+  if(!m) return false;
+  try{
+    const o=JSON.parse(decodeURIComponent(escape(atob(m[1]))));
+    if(o.u&&o.k&&!perigosa(o.k)){
+      setCloudCfg({url:o.u,key:o.k});
+      try{ history.replaceState(null,'',location.pathname); }catch(e){}
+      return true;
+    }
+  }catch(e){}
+  return false;
 }
 function setCloudCfg(c){
   if(c) localStorage.setItem(CLOUD_KEY,JSON.stringify(c)); else localStorage.removeItem(CLOUD_KEY);
@@ -4139,6 +4165,7 @@ async function cloudProvs(url){
 }
 
 async function cloudInit(){
+  const veioDeLink=lerConfigDaURL();
   const c=cloudCfg();
   if(!c||!c.url||!c.key||!window.supabase){ cloudState='off'; paintCloud(); return; }
   try{
@@ -4155,6 +4182,8 @@ async function cloudInit(){
     });
     paintCloud();
     if(sbUser) await cloudPull();
+    if(veioDeLink&&!sbUser) setTimeout(()=>{ nuvemModal();
+      toast('Configuração recebida. Agora é só entrar com seu e-mail.',true); },400);
   }catch(e){ console.warn('cloudInit',e); cloudState='erro'; paintCloud(); }
 }
 
@@ -4301,7 +4330,8 @@ function nuvemModal(){
            Para ligá-lo seria preciso criar credenciais no Google Cloud — o link por e-mail dispensa isso.</p>`}
       `:''}
       ${sbUser?`<button class="b sm line" id="cOut">Sair</button>
-        <button class="b sm line" id="cNow">Sincronizar agora</button>`:''}
+        <button class="b sm line" id="cNow">Sincronizar agora</button>
+        <button class="b sm line" id="cShare">Configurar outro aparelho</button>`:''}
     </div>
     <label class="fld"><span>URL do projeto Supabase</span>
       <input id="cU" value="${esc(c.url)}" placeholder="https://xxxx.supabase.co"></label>
@@ -4335,6 +4365,26 @@ function nuvemModal(){
     } if(window.caches){ const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); }
     }catch(e){}
     location.reload(true); };
+  const sh=md.querySelector('#cShare');
+  if(sh) sh.onclick=()=>{
+    const url=linkConfig();
+    md.innerHTML=`<h3>Configurar outro aparelho</h3>
+      <p class="hint">Abra este link no celular. Ele já chega configurado — só falta entrar com o seu e-mail.
+      Mande por WhatsApp para você mesmo, ou digite o endereço e cole o link.</p>
+      <div class="urlbox"><code style="margin:0">${esc(url)}</code></div>
+      <p class="hint">O link carrega a chave pública do projeto, a mesma que já está dentro do site.
+      Ele não dá acesso aos seus dados: sem login, não abre nada.</p>
+      <div class="acts"><button class="b" id="sV">Voltar</button>
+        <button class="b solid" id="sC">Copiar link</button></div>`;
+    md.querySelector('#sV').onclick=nuvemModal;
+    md.querySelector('#sC').onclick=()=>{
+      const b=md.querySelector('#sC');
+      (navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject())
+        .then(()=>{b.textContent='Copiado';setTimeout(()=>b.textContent='Copiar link',1600);})
+        .catch(()=>{ const r=document.createRange(); r.selectNode(md.querySelector('code'));
+          getSelection().removeAllRanges(); getSelection().addRange(r); b.textContent='Selecionado — copie'; });
+    };
+  };
   const cp=md.querySelector('#cCopy');
   if(cp) cp.onclick=()=>{ const t=md.querySelector('#cSelf').textContent;
     (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject())

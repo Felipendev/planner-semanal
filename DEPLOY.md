@@ -14,6 +14,7 @@ O retorno ao 1.4 existe porque a URL da Vercel só nasce na parte 2.
 planner-semanal/
 ├── web/                  ← isto é o que vai para o ar
 │   ├── index.html        (o app inteiro, 250 KB)
+│   ├── config.js         (URL e chave do Supabase — preencha uma vez)
 │   ├── manifest.json     (instalação como aplicativo)
 │   ├── sw.js             (funciona offline)
 │   ├── icon-192.png
@@ -351,6 +352,41 @@ Estados possíveis do botão:
 Na primeira entrada, o app **envia** o que já existe neste navegador.
 Nos aparelhos seguintes, ele **baixa e funde** com o que houver local.
 
+## Parte 3.6 — Deixar todo aparelho já configurado *(recomendado)*
+
+Por padrão, cada navegador guarda a URL e a chave separadamente — ou seja, você
+teria que digitar aquela chave enorme no celular também. Duas formas de evitar.
+
+### Forma 1 — link pronto *(imediato, sem publicar nada)*
+
+No computador já conectado: **Nuvem → Configurar outro aparelho → Copiar link**.
+
+Mande esse link para você mesmo por WhatsApp e abra no celular. Ele chega
+configurado; só falta entrar com o e-mail.
+
+> O link carrega a chave pública — a mesma que já está dentro do site. Sem
+> login ele não abre dado nenhum.
+
+### Forma 2 — embutir no site *(definitivo)*
+
+Abra **`web/config.js`** e preencha com os mesmos dois valores do passo 1.5:
+
+```js
+window.PLANNER_CFG = {
+  url: "https://smhpomzcsucyriacmncz.supabase.co",
+  key: "sb_publishable_..."
+};
+```
+
+Rode o **`atualizar.bat`**. A partir daí, **qualquer aparelho que abrir o site
+já vem configurado** — inclusive um celular novo, ou o navegador de outra
+pessoa. Basta fazer login.
+
+É assim que a maioria dos aplicativos Supabase funciona: a chave pública vive
+dentro do código. A segurança está na política do banco, não no segredo da chave.
+
+---
+
 ## Parte 4 — Instalar no celular
 
 1. Abra a URL no **Chrome do Android** (ou Safari no iPhone)
@@ -447,4 +483,5 @@ Em ambos os casos, o arquivo que vai para o ar é `web/index.html`.
 | App não atualiza após deploy | **Nuvem → Buscar atualização**, ou `Ctrl+Shift+R` no computador |
 | Celular com versão diferente do PC | Compare em **Nuvem → Versão instalada aqui** e use *Buscar atualização* |
 | Marcou no PC e não aparece no celular | Volte ao app no celular (ele busca ao ganhar foco) ou use *Sincronizar agora* |
+| Celular pede URL e chave de novo | Normal: a configuração é por navegador. Use *Configurar outro aparelho* ou preencha `web/config.js` |
 | Vercel recusa: *commit author did not have contributing access* | E-mail do commit diferente do GitHub — rode `corrigir-autor.bat` (passo 2.3) |
