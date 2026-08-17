@@ -1,7 +1,10 @@
 # Colocar no ar — Vercel + Supabase
 
-Tempo estimado: **20 a 30 minutos**, uma vez só.
-Depois disso, atualizar é um comando (ou um `git push`).
+Tempo estimado: **15 minutos** pelo caminho recomendado, uma vez só.
+Depois disso, publicar uma alteração é um duplo clique.
+
+**Ordem:** Supabase (partes 1.1 a 1.3) → Vercel (parte 2) → voltar ao Supabase (1.4) → conectar o app (parte 3).
+O retorno ao 1.4 existe porque a URL da Vercel só nasce na parte 2.
 
 ---
 
@@ -19,6 +22,8 @@ planner-semanal/
 │   └── schema.sql        (a tabela e as regras de acesso)
 ├── vercel.json           (configuração do deploy)
 ├── planner-semanal.html  (cópia local, para abrir sem internet)
+├── publicar.bat          (primeira publicação — duplo clique)
+├── atualizar.bat         (publicar alterações depois)
 ├── SPEC.md
 └── DEPLOY.md             (este arquivo)
 ```
@@ -43,84 +48,238 @@ Isso cria:
 - Política de acesso: cada um só enxerga a própria linha
 - `estado_historico` — as **30 versões anteriores**, gravadas automaticamente a cada alteração. É a sua rede de segurança contra um merge ruim.
 
-### 1.3 Ligar o login com Google
-1. **Authentication → Sign In / Providers → Google** → ative
-2. Ele pede *Client ID* e *Client Secret*. Para obtê-los:
-   - Vá em **console.cloud.google.com** → crie um projeto (ou use um existente)
-   - **APIs e serviços → Tela de permissão OAuth** → tipo **Externo** → preencha nome do app e seu e-mail → salve
-   - **Credenciais → Criar credenciais → ID do cliente OAuth → Aplicativo da Web**
-   - Em **URIs de redirecionamento autorizados**, cole a URL que o Supabase mostra na própria tela do provedor Google (algo como `https://xxxx.supabase.co/auth/v1/callback`)
-   - Copie o *Client ID* e o *Client Secret* de volta para o Supabase → **Save**
+### 1.3 Escolher como você vai entrar
+
+> **Tudo aqui é no navegador.** Nenhum comando, nenhum terminal.
+
+Há dois caminhos. Comece pelo A — leva um minuto e resolve o seu caso.
+
+---
+
+#### Caminho A — link por e-mail *(recomendado, sem configuração)*
+
+Você digita seu e-mail no app, recebe um link, clica, e está dentro.
+Não precisa do Google Cloud, não precisa criar credencial nenhuma.
+
+**No painel do Supabase:**
+1. Menu lateral → **Authentication**
+2. Aba **Sign In / Providers**
+3. Localize **Email** na lista → confirme que está **habilitado** (vem ligado por padrão)
+4. Pronto. Não há mais nada a fazer aqui.
+
+> Em cada aparelho novo você pede o link uma vez. Depois a sessão fica salva.
+> Para dois aparelhos, isso acontece duas vezes na vida.
+
+---
+
+#### Caminho B — entrar com o Google *(opcional)*
+
+Só vale se você quiser o botão "Entrar com Google". Exige criar credenciais
+em **outro site**, o Google Cloud. São duas abas do navegador conversando.
+
+**Aba 1 — Supabase** (`supabase.com`, seu projeto)
+1. **Authentication → Sign In / Providers → Google** → ligue a chave
+2. A tela vai mostrar um endereço em **Callback URL**, algo como
+   `https://xxxx.supabase.co/auth/v1/callback`
+3. **Copie esse endereço.** Deixe esta aba aberta.
+
+**Aba 2 — Google Cloud** (`console.cloud.google.com`)
+4. No topo, ao lado do logo, clique no seletor de projeto → **Novo projeto** → nome `planner` → **Criar**
+5. Menu ☰ → **APIs e serviços** → **Tela de permissão OAuth**
+   - Tipo: **Externo** → **Criar**
+   - Nome do app: `Planner` · E-mail de suporte: o seu · E-mail do desenvolvedor: o seu
+   - **Salvar e continuar** nas telas seguintes até o fim
+6. Menu ☰ → **APIs e serviços** → **Credenciais**
+   - **+ Criar credenciais** → **ID do cliente OAuth**
+   - Tipo de aplicativo: **Aplicativo da Web**
+   - Em **URIs de redirecionamento autorizados** → **+ Adicionar URI** →
+     **cole aqui o endereço que você copiou no passo 3**
+   - **Criar**
+7. Aparece uma janela com **ID do cliente** e **Chave secreta do cliente**. Copie os dois.
+
+**Volte à Aba 1 — Supabase**
+8. Cole o **ID do cliente** em *Client ID* e a **chave secreta** em *Client Secret*
+9. **Save**
+
+> Se o login depois abrir e voltar sem entrar, quase sempre é o passo 1.4 abaixo
+> que ficou faltando.
+
+---
 
 ### 1.4 Autorizar o endereço do site
-**Authentication → URL Configuration**
-- *Site URL*: a URL da Vercel (você terá na Parte 2 — volte aqui depois)
-- *Redirect URLs*: adicione a mesma URL e também `http://localhost:3000` se for testar local
 
-### 1.5 Copiar as chaves
-**Project Settings → API**, anote:
-- **Project URL** → `https://xxxx.supabase.co`
-- **anon public** → a chave que começa com `eyJ...`
+**No Supabase → Authentication → URL Configuration:**
+- **Site URL**: a URL da Vercel (você só terá na Parte 2 — **volte aqui depois do deploy**)
+- **Redirect URLs** → *Add URL*: a mesma URL da Vercel
 
-> Essas duas informações são públicas por natureza. Quem protege os dados é a política de acesso, que só permite ler a própria linha. Nunca use a chave `service_role` no app.
+Sem isso, o link do e-mail e o login do Google levam para o lugar errado.
+
+### 1.5 Copiar as duas chaves
+
+São **dois valores** que você vai colar no app na Parte 3. Deixe um bloco de
+notas aberto para guardá-los.
+
+#### Onde ficam
+
+No painel do seu projeto no Supabase, há dois caminhos:
+
+**Caminho rápido:** botão **Connect**, no topo da página, ao lado do nome do
+projeto. Abre uma janela com os valores prontos para copiar.
+
+**Caminho completo:**
+1. Ícone de **engrenagem** (⚙ *Project Settings*), no rodapé do menu lateral
+2. Na coluna que abrir, clique em **API Keys**
+
+#### Valor 1 — Project URL
+
+Fica em **Project Settings → General**, ou na mesma tela de API.
+Formato: `https://abcdefghijkl.supabase.co`
+
+> É o endereço do seu projeto. Copie inteiro, sem barra no final.
+
+#### Valor 2 — a chave pública
+
+A tela de **API Keys** tem **duas abas**. Você pode usar qualquer uma das duas
+— o app aceita ambas. Pegue a que aparecer para você:
+
+| Aba | O que copiar | Como começa |
+|---|---|---|
+| **Publishable and secret API keys** (nova) | **Publishable key** | `sb_publishable_...` |
+| **Legacy API keys** | a chave **`anon`** / *public* | `eyJhbGciOi...` |
+
+Se a aba nova estiver vazia, clique em **Create new API keys** e copie a
+*Publishable key*.
+
+#### ⚠ O que NÃO copiar
+
+Na mesma tela existem a **Secret key** (`sb_secret_...`) e a **`service_role`**.
+Essas duas **ignoram todas as regras de segurança** do banco — quem tiver uma
+delas lê e apaga tudo. Elas nunca entram no app.
+
+O próprio planner recusa essas chaves se você colar por engano.
+
+#### Por que a chave pública pode ficar exposta
+
+Ela vai dentro do site, então qualquer pessoa consegue lê-la — e tudo bem.
+Ela só diz *"sou um visitante deste projeto"*. Quem decide o que cada visitante
+enxerga é a política que você criou no passo 1.2, que só libera a linha do
+próprio usuário logado. Sem login, ela não abre nada.
+
+#### Conferindo
+
+Você deve ter anotado algo assim:
+
+```
+Project URL:  https://xxxxxxxxxxxx.supabase.co
+Chave:        sb_publishable_xxxxxxxxxxxxxxxxxxxx
+              (ou eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...)
+```
+
+Guarde — é o que você vai colar na **Parte 3**.
 
 ---
 
 ## Parte 2 — Vercel (publicar o site)
 
-### Caminho A — GitHub (recomendado)
-Cada alteração futura publica sozinha ao dar `push`.
+### 2.1 Enviar o código para o GitHub
+Dê **duplo clique em `publicar.bat`** na pasta do projeto.
 
-```bash
-cd "C:\Users\user\OneDrive\Documents\pessoal\workspace-felipe\planner-semanal"
-git init
-git add .
-git commit -m "planner: primeira versão no ar"
-```
+Ele cria o repositório local, faz o commit e envia para
+`github.com/Felipendev/planner-semanal`. Se pedir login, autorize na janela
+do navegador que abrir.
 
-1. Crie um repositório **privado** em github.com (sem README, sem .gitignore)
-2. Rode o que o GitHub mostrar, algo como:
-   ```bash
-   git remote add origin https://github.com/SEU_USUARIO/planner.git
-   git branch -M main
-   git push -u origin main
-   ```
-3. Em **vercel.com** → *Add New → Project* → importe o repositório
-4. Framework Preset: **Other**. O `vercel.json` já aponta para a pasta `web`
-5. **Deploy**
+> Se o repositório no GitHub já tiver um README, o script avisa e mostra os
+> dois comandos para resolver.
+> Se acusar erro de permissão, feche o VSCode e qualquer terminal aberto na
+> pasta e rode de novo — é o OneDrive segurando arquivos.
 
-### Caminho B — sem GitHub
-```bash
-npm i -g vercel
-cd "C:\Users\user\OneDrive\Documents\pessoal\workspace-felipe\planner-semanal"
-vercel --prod
-```
-Responda às perguntas aceitando os padrões. Para atualizar depois, rode `vercel --prod` de novo.
+### 2.2 Publicar na Vercel
+1. Entre em **vercel.com** → *Add New* → *Project*
+2. Conecte sua conta do GitHub e **importe** `planner-semanal`
+3. Framework Preset: **Other** — não mexa em mais nada,
+   o `vercel.json` já aponta para a pasta `web`
+4. **Deploy**
 
-### Depois do deploy
-Anote a URL (`https://planner-xxxx.vercel.app`) e **volte ao passo 1.4** para autorizá-la no Supabase. Sem isso o login com Google falha.
+Em cerca de 40 segundos ele mostra a URL, algo como
+`https://planner-semanal.vercel.app`.
+
+### 2.3 Voltar ao Supabase
+**Copie a URL da Vercel e volte ao passo 1.4** para autorizá-la em
+*Authentication → URL Configuration*. Sem isso o login não conclui.
+
+### Publicar alterações depois
+Duplo clique em **`atualizar.bat`**. Ele sincroniza `planner-semanal.html`
+com `web/index.html`, pergunta uma descrição e envia. A Vercel republica sozinha.
 
 ---
 
 ## Parte 3 — Conectar o app à nuvem
 
-1. Abra a URL da Vercel
-2. Clique no **segundo pontinho** na barra superior (ao lado do primeiro, que indica gravação local)
-3. Cole a **Project URL** e a **chave anon**
-4. **Salvar e conectar** → **Entrar com Google**
+### 3.1 Abrir e achar o botão
 
-O que acontece: na primeira entrada ele envia o que já existe neste navegador. Nos aparelhos seguintes, ele baixa e **funde** com o que houver local.
+Abra a URL da Vercel no computador.
 
-### Como o conflito é resolvido
-| Tipo de dado | Regra |
+Na **barra superior**, à direita, entre o relógio de foco e os botões
+*Fechar dia* / *Novo*, existem **dois botões arredondados com texto**:
+
+```
+   ( • Local )   ( • Conectar )
+        ↑              ↑
+   onde os dados    a nuvem — é
+   ficam gravados   neste que você clica
+   neste computador
+```
+
+O botão **Conectar** fica **piscando em âmbar** enquanto a nuvem não estiver
+ligada. Assim que você abrir o site publicado, aparece também um aviso no
+rodapé: *"Site no ar. Falta ligar a nuvem para usar no celular"* — clicar
+nesse aviso abre a mesma tela.
+
+> Em tela estreita (celular) os botões mostram só a bolinha colorida,
+> para caber. No computador aparecem com texto.
+
+### 3.2 Colar as chaves
+
+Clicando em **Conectar**, abre a janela **Nuvem**. Preencha:
+
+| Campo | Valor (você anotou no passo 1.5) |
 |---|---|
-| Conclusões, água, páginas lidas, dias fechados, desafios vencidos | **União** — nada se perde, marcar nos dois aparelhos dá o mesmo resultado |
-| Rotina, metas, áreas, hábitos, frases | Vence a versão mais recente |
-| Recorde de sequência | Vence o maior |
+| **URL do projeto Supabase** | `https://xxxx.supabase.co` |
+| **Chave pública do projeto** | `sb_publishable_...` ou `eyJhbGciOi...` |
 
-Testado: 2 aparelhos marcando dias diferentes offline resultam na soma dos dois, não na substituição.
+Clique em **Salvar e conectar**.
 
----
+> Se você colar por engano a chave *secret* ou *service_role*, o app recusa
+> e explica qual pegar. É proposital.
+
+### 3.3 Entrar na conta
+
+A mesma janela passa a mostrar duas opções:
+
+- **Receber link por e-mail** — digite seu e-mail → abra a caixa de entrada →
+  clique no link. Ele traz você de volta ao app já autenticado.
+  *(Se não chegar em 1 minuto, veja o lixo eletrônico.)*
+- **Entrar com Google** — só funciona se você fez o Caminho B do passo 1.3.
+
+### 3.4 Conferir
+
+O botão da barra deve ficar **verde escrito "Nuvem"**. Passando o mouse:
+*"Sincronizado. Suas marcações aparecem em qualquer aparelho."*
+
+Estados possíveis do botão:
+
+| Aparência | Significado |
+|---|---|
+| âmbar piscando · **Conectar** | nuvem não configurada |
+| âmbar · **Entrar** | configurada, falta fazer login |
+| âmbar · **Enviando** | mandando alterações agora |
+| verde · **Nuvem** | tudo sincronizado |
+| vermelho · **Erro** | clique para ver o motivo |
+
+### 3.5 O que acontece com seus dados
+
+Na primeira entrada, o app **envia** o que já existe neste navegador.
+Nos aparelhos seguintes, ele **baixa e funde** com o que houver local.
 
 ## Parte 4 — Instalar no celular
 
@@ -182,7 +341,8 @@ Em ambos os casos, o arquivo que vai para o ar é `web/index.html`.
 | Sintoma | Causa provável |
 |---|---|
 | Login abre e volta sem entrar | A URL da Vercel não foi autorizada no passo 1.4 |
-| Pontinho vermelho | Chave errada, ou o `schema.sql` não foi executado |
+| Link do e-mail não chega | Verifique o lixo eletrônico. O Supabase gratuito envia poucos e-mails por hora |
+| Botão da nuvem vermelho | Chave errada, ou o `schema.sql` não foi executado |
 | Dados não aparecem no outro aparelho | Você entrou com contas Google diferentes |
 | Notificação não aparece | Assistente de Foco do Windows, ou permissão negada no navegador |
 | App não atualiza após deploy | Recarregue com `Ctrl+Shift+R` — o service worker guarda a versão anterior |

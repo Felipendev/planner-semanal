@@ -89,8 +89,20 @@ input[type=checkbox]{width:auto;}
 .grow{flex:1;}
 .stat{display:flex;align-items:baseline;gap:5px;font-size:12.5px;color:var(--ink3);}
 .stat b{font-size:14px;color:var(--ink);font-weight:600;}
-.sync{width:6px;height:6px;border-radius:50%;background:var(--ink4);cursor:pointer;flex-shrink:0;}
-.sync.ok{background:var(--good);} .sync.warn{background:var(--warn);}
+.chipbtn{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);
+  border-radius:20px;padding:4px 11px 4px 9px;font-size:11.5px;color:var(--ink2);cursor:pointer;
+  white-space:nowrap;transition:.12s;}
+.chipbtn:hover{border-color:var(--ink4);color:var(--ink);}
+.chipbtn i{width:7px;height:7px;border-radius:50%;background:var(--ink4);flex:none;}
+.chipbtn.ok i{background:var(--good);}
+.chipbtn.warn i{background:var(--warn);}
+.chipbtn.bad i{background:var(--now);}
+.chipbtn.warn{border-color:color-mix(in srgb,var(--warn) 45%,var(--line));}
+.chipbtn.bad{border-color:color-mix(in srgb,var(--now) 45%,var(--line));}
+.chipbtn.pisca{animation:pulsa 2s ease-in-out infinite;}
+@keyframes pulsa{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--warn) 55%,transparent)}
+  50%{box-shadow:0 0 0 5px transparent}}
+@media(max-width:900px){ .chipbtn span{display:none;} .chipbtn{padding:6px;} }
 
 /* ── shell ─────────────────────────────────────────── */
 .shell{display:flex;height:calc(100vh - 52px);}
@@ -613,6 +625,9 @@ input[type=checkbox]{width:auto;}
 .nfh{font-size:12.5px;font-weight:600;margin-bottom:4px;}
 .nfp{font-size:11.5px;color:var(--ink3);line-height:1.5;margin:0 0 8px;}
 .notif .b{margin-bottom:0;}
+.cent{display:flex;flex-wrap:wrap;gap:7px;align-items:center;}
+.cent input{flex:1;min-width:150px;}
+.cou{font-size:11.5px;color:var(--ink3);}
 .hint{font-size:11.5px;color:var(--ink3);line-height:1.5;margin-top:-4px;margin-bottom:13px;}
 
 /* ── toasts ────────────────────────────────────────── */
@@ -715,8 +730,8 @@ body.haspomo .undo{bottom:104px;}
   <span class="grow"></span>
   <span class="stat" id="hstat"></span>
   <button class="b icon" id="theme" title="Tema"></button>
-  <span class="sync" id="sync" title="Onde seus dados estão"></span>
-  <span class="sync" id="cloud" title="Nuvem"></span>
+  <button class="chipbtn" id="sync" title="Onde seus dados estão"><i></i><span>Arquivo</span></button>
+  <button class="chipbtn" id="cloud" title="Nuvem"><i></i><span>Nuvem</span></button>
   <button class="b line sm" id="tomorrow">Amanhã</button>
   <button class="b line sm" id="closeDay">Fechar dia</button>
   <button class="b solid sm" id="new">Novo</button>
@@ -1131,10 +1146,13 @@ async function initFS(){
 }
 function paintSync(){
   const el=document.getElementById('sync'); if(!el) return;
-  el.className='sync'+(sstate==='file'?' ok':(sstate==='perm'?' warn':(FSOK?' warn':'')));
-  el.title = sstate==='file' ? (dirty?'Gravando…':'Salvo no arquivo de dados')
-    : sstate==='perm' ? 'Clique para reconectar ao arquivo'
-    : 'Os dados só existem neste navegador. Clique para gravar num arquivo.';
+  const t=el.querySelector('span');
+  if(sstate==='file'){ el.className='chipbtn ok'; t.textContent=dirty?'Salvando':'Arquivo';
+    el.title='Gravando no arquivo de dados deste computador.'; }
+  else if(sstate==='perm'){ el.className='chipbtn warn'; t.textContent='Reconectar';
+    el.title='O navegador precisa da sua permissão para voltar a gravar no arquivo.'; }
+  else { el.className='chipbtn'; t.textContent='Local';
+    el.title='Os dados estão só neste navegador. Clique para gravar também num arquivo.'; }
 }
 window.addEventListener('beforeunload',e=>{ if(dirty&&sstate!=='file'){e.preventDefault();e.returnValue='';} });
 
@@ -4081,8 +4099,15 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden) checkAle
        → UNIÃO, nunca sobrescrita. É o dado que dói perder.
    ═══════════════════════════════════════════════════════ */
 const CLOUD_KEY='planner_cloud';
-let sb=null, sbUser=null, cloudState='off', cloudTimer=null, cloudPending=false;
+let sb=null, sbUser=null, cloudState='off', cloudTimer=null, cloudPending=false, provs=null;
 
+/** Reconhece chave de servidor, que jamais pode ir para o navegador. */
+function perigosa(k){
+  if(/^sb_secret_/i.test(k)) return true;
+  try{ const p=JSON.parse(atob(k.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+    if(p && p.role && p.role!=='anon') return true; }catch(e){}
+  return false;
+}
 function cloudCfg(){
   try{ return JSON.parse(localStorage.getItem(CLOUD_KEY)||'null'); }catch(e){ return null; }
 }
@@ -4090,11 +4115,24 @@ function setCloudCfg(c){
   if(c) localStorage.setItem(CLOUD_KEY,JSON.stringify(c)); else localStorage.removeItem(CLOUD_KEY);
 }
 
+/** Pergunta ao projeto quais formas de entrada estão habilitadas.
+    Sem isso o app oferece um botão que devolve erro 400.        */
+async function cloudProvs(url){
+  try{
+    const r=await fetch(url+'/auth/v1/settings',{headers:{apikey:cloudCfg().key}});
+    if(!r.ok) return null;
+    const j=await r.json();
+    return {google:!!(j.external&&j.external.google),
+            email:!(j.external&&j.external.email===false)};
+  }catch(e){ return null; }
+}
+
 async function cloudInit(){
   const c=cloudCfg();
   if(!c||!c.url||!c.key||!window.supabase){ cloudState='off'; paintCloud(); return; }
   try{
     sb=window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    provs=await cloudProvs(c.url);
     const {data}=await sb.auth.getSession();
     sbUser=data.session?data.session.user:null;
     cloudState=sbUser?'on':'anon';
@@ -4111,7 +4149,24 @@ async function cloudInit(){
 
 async function cloudLogin(){
   if(!sb) return;
-  await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
+  if(provs && !provs.google){
+    alert('O login com Google não está habilitado no seu projeto Supabase.\n\n'+
+      'Use "Receber link por e-mail" — funciona sem nenhuma configuração.\n\n'+
+      'Se quiser mesmo o Google, é preciso criar credenciais no Google Cloud (Caminho B do DEPLOY.md).');
+    return;
+  }
+  const {error}=await sb.auth.signInWithOAuth({provider:'google',
+    options:{redirectTo:location.origin+location.pathname}});
+  if(error) alert('Não deu para entrar com Google: '+error.message+
+    '\n\nUse o link por e-mail.');
+}
+/** Link mágico: dispensa qualquer configuração no Google Cloud. */
+async function cloudLoginEmail(email){
+  if(!sb) return;
+  const {error}=await sb.auth.signInWithOtp({email,
+    options:{emailRedirectTo:location.origin+location.pathname}});
+  if(error){ alert('Não consegui enviar: '+error.message); return false; }
+  return true;
 }
 async function cloudLogout(){ if(sb) await sb.auth.signOut(); sbUser=null; cloudState='anon'; paintCloud(); }
 
@@ -4185,11 +4240,15 @@ window.addEventListener('online',()=>{ if(sbUser) cloudPush(true); });
 
 function paintCloud(){
   const el=document.getElementById('cloud'); if(!el) return;
-  const m={off:['','Dados só neste aparelho — clique para ativar a nuvem'],
-    anon:['warn','Entre com o Google para sincronizar'],
-    on:[cloudPending?'warn':'ok', cloudPending?'Enviando…':'Sincronizado com a nuvem'],
-    erro:['bad','Erro de sincronização — clique para ver']}[cloudState]||['',''];
-  el.className='sync '+m[0]; el.title=m[1];
+  const t=el.querySelector('span');
+  const m={
+    off:  ['pisca warn','Conectar','Seus dados estão só neste aparelho. Clique para sincronizar com o celular.'],
+    anon: ['warn','Entrar','Falta entrar na sua conta para sincronizar. Clique.'],
+    on:   [cloudPending?'warn':'ok', cloudPending?'Enviando':'Nuvem',
+           cloudPending?'Enviando alterações…':'Sincronizado. Suas marcações aparecem em qualquer aparelho.'],
+    erro: ['bad','Erro','Falha ao sincronizar. Clique para ver o que houve.'],
+  }[cloudState]||['','Nuvem',''];
+  el.className='chipbtn '+m[0]; t.textContent=m[1]; el.title=m[2];
 }
 
 function nuvemModal(){
@@ -4201,21 +4260,40 @@ function nuvemModal(){
       <p class="nfp">${cloudState==='on'
         ? 'Suas marcações vão para o Supabase e aparecem em qualquer aparelho onde você entrar.'
         : 'Sem nuvem o planner funciona normalmente, mas cada aparelho guarda os seus próprios dados.'}</p>
-      ${sb&&!sbUser?`<button class="b sm line" id="cLogin">Entrar com Google</button>`:''}
+      ${sb&&!sbUser?`
+      <div class="cent">
+        <input id="cEm" type="email" placeholder="seu@email.com" value="felipehenrique.pds@gmail.com">
+        <button class="b sm solid" id="cMail">Receber link por e-mail</button>
+      </div>
+      ${provs&&provs.google
+        ? `<div style="margin-top:9px"><button class="b sm line" id="cLogin">ou entrar com Google</button></div>`
+        : `<p class="nfp" style="margin:9px 0 0">O login com Google não está habilitado neste projeto.
+           Para ligá-lo seria preciso criar credenciais no Google Cloud — o link por e-mail dispensa isso.</p>`}
+      `:''}
       ${sbUser?`<button class="b sm line" id="cOut">Sair</button>
         <button class="b sm line" id="cNow">Sincronizar agora</button>`:''}
     </div>
     <label class="fld"><span>URL do projeto Supabase</span>
       <input id="cU" value="${esc(c.url)}" placeholder="https://xxxx.supabase.co"></label>
-    <label class="fld"><span>Chave anon (publishable)</span>
-      <input id="cK" value="${esc(c.key)}" placeholder="eyJhbGciOi..."></label>
-    <p class="hint">Essas duas informações são públicas por natureza — quem protege os dados é a política de acesso do banco, que só deixa cada usuário ler a própria linha.</p>
+    <label class="fld"><span>Chave pública do projeto</span>
+      <input id="cK" value="${esc(c.key)}" placeholder="sb_publishable_... ou eyJhbGciOi..."></label>
+    <p class="hint">No Supabase: <b>Connect</b> no topo, ou ⚙ <b>Project Settings → API Keys</b>.
+    Use a <b>Publishable key</b> (aba nova) ou a <b>anon / public</b> (aba legada) — as duas servem.
+    Nunca a <i>secret</i> nem a <i>service_role</i>: essas ignoram a segurança do banco e o app as recusa.</p>
     <div class="acts">
       ${c.url?`<button class="b danger left" id="cDel">Desconectar</button>`:''}
       <button class="b" id="cX">Fechar</button>
       <button class="b solid" id="cOk">Salvar e conectar</button></div>`;
   md.querySelector('#cX').onclick=shut;
   const l=md.querySelector('#cLogin'); if(l) l.onclick=cloudLogin;
+  const em=md.querySelector('#cMail');
+  if(em) em.onclick=async()=>{
+    const v=md.querySelector('#cEm').value.trim();
+    if(!v){ alert('Escreva o e-mail.'); return; }
+    em.disabled=true; em.textContent='Enviando…';
+    if(await cloudLoginEmail(v)){ shut();
+      toast('Link enviado para '+v+'. Abra o e-mail e clique — pode cair no lixo eletrônico.',true); }
+    else { em.disabled=false; em.textContent='Receber link por e-mail'; } };
   const o=md.querySelector('#cOut'); if(o) o.onclick=()=>{cloudLogout();shut();};
   const n=md.querySelector('#cNow'); if(n) n.onclick=async()=>{ await cloudPull(); await cloudPush(); shut(); };
   const d=md.querySelector('#cDel'); if(d) d.onclick=()=>{
@@ -4225,6 +4303,13 @@ function nuvemModal(){
     const url=md.querySelector('#cU').value.trim().replace(/\/+$/,'');
     const key=md.querySelector('#cK').value.trim();
     if(!url||!key){ alert('Preencha a URL e a chave.'); return; }
+    if(!/^https:\/\/[a-z0-9-]+\.supabase\.(co|in)$/i.test(url)){
+      if(!confirm('Esse endereço não parece o de um projeto Supabase\n(https://xxxx.supabase.co).\n\nContinuar mesmo assim?')) return; }
+    if(perigosa(key)){
+      alert('Essa é uma chave de SERVIDOR (secret / service_role).\n\n'+
+        'Ela ignora todas as regras de segurança do banco — qualquer pessoa que abrisse o site poderia ler e apagar tudo.\n\n'+
+        'Volte ao Supabase e copie a chave pública: "Publishable key" (sb_publishable_...) ou a "anon / public" na aba de chaves legadas.');
+      return; }
     setCloudCfg({url,key}); shut();
     await cloudInit();
     if(sb&&!sbUser) cloudLogin();
@@ -4348,7 +4433,26 @@ function paint(){
 }
 ensureRealista(); ensureLevels(); ensureExtras(); ensureOut(); ensureAlertas();
 paint(); pomoPaint();
-window.addEventListener('load',()=>{ setTimeout(cloudInit,300); });
+window.addEventListener('load',()=>{ setTimeout(async()=>{
+  await cloudInit();
+  const q=new URLSearchParams((location.hash||'').replace(/^#/,'')+'&'+location.search.replace(/^\?/,''));
+  if(q.get('error')||q.get('error_code')){
+    const cod=q.get('error_code')||q.get('error');
+    const desc=(q.get('error_description')||'').replace(/\+/g,' ');
+    const amigavel = /provider is not enabled|validation_failed/i.test(cod+desc)
+      ? 'Esse provedor de login não está habilitado no seu projeto. Use "Receber link por e-mail".'
+      : /expired|invalid/i.test(cod+desc)
+      ? 'O link expirou ou já foi usado. Peça outro no botão da nuvem.'
+      : desc||cod;
+    try{ history.replaceState(null,'',location.pathname); }catch(e){}
+    setTimeout(()=>toast('<b>Não consegui entrar.</b><br>'+esc(amigavel),true,nuvemModal),600);
+  }
+  const publicado = location.protocol==='https:';
+  if(publicado && cloudState==='off' && !S.milestones['convite-nuvem']){
+    S.milestones['convite-nuvem']=true; save();
+    setTimeout(()=>toast('<b>Site no ar.</b><br>Falta ligar a nuvem para usar no celular com os mesmos dados. Clique aqui.',true,nuvemModal),1500);
+  }
+},300); });
 if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); initFS();
 
 (function greet(){
