@@ -3,7 +3,7 @@
 Tempo estimado: **15 minutos** pelo caminho recomendado, uma vez só.
 Depois disso, publicar uma alteração é um duplo clique.
 
-**Ordem:** Supabase (partes 1.1 a 1.3) → Vercel (parte 2) → voltar ao Supabase (1.4) → conectar o app (parte 3).
+**Ordem:** Supabase (1.1 a 1.3) → Vercel (2.1 e 2.2) → voltar ao Supabase (1.4) → conectar o app (parte 3).
 O retorno ao 1.4 existe porque a URL da Vercel só nasce na parte 2.
 
 ---
@@ -24,6 +24,7 @@ planner-semanal/
 ├── planner-semanal.html  (cópia local, para abrir sem internet)
 ├── publicar.bat          (primeira publicação — duplo clique)
 ├── atualizar.bat         (publicar alterações depois)
+├── corrigir-autor.bat    (se a Vercel recusar o commit)
 ├── SPEC.md
 └── DEPLOY.md             (este arquivo)
 ```
@@ -108,11 +109,31 @@ em **outro site**, o Google Cloud. São duas abas do navegador conversando.
 
 ### 1.4 Autorizar o endereço do site
 
-**No Supabase → Authentication → URL Configuration:**
-- **Site URL**: a URL da Vercel (você só terá na Parte 2 — **volte aqui depois do deploy**)
-- **Redirect URLs** → *Add URL*: a mesma URL da Vercel
+> ⚠ **O erro mais comum do guia inteiro está aqui.**
+> O endereço precisa incluir **`https://`**. Sem isso o Supabase trata o valor
+> como um caminho interno e o link do e-mail volta com
+> `{"error": "requested path is invalid"}`.
 
-Sem isso, o link do e-mail e o login do Google levam para o lugar errado.
+**No Supabase → Authentication → URL Configuration:**
+
+| Campo | Valor |
+|---|---|
+| **Site URL** | `https://planner-semanal-sand.vercel.app` |
+| **Redirect URLs** → *Add URL* | `https://planner-semanal-sand.vercel.app` |
+
+Errado × certo:
+
+```
+✗  planner-semanal-sand.vercel.app          (vira caminho dentro do Supabase)
+✗  https://planner-semanal-sand.vercel.app/ (a barra final às vezes atrapalha)
+✓  https://planner-semanal-sand.vercel.app
+```
+
+**Como saber o endereço exato:** abra o app publicado, clique no botão
+**Conectar** da barra superior. A janela mostra o endereço correto num quadro,
+com botão de **copiar**. É exatamente esse que deve ir nos dois campos.
+
+Depois de salvar, **peça um link novo** — o anterior fica inválido.
 
 ### 1.5 Copiar as duas chaves
 
@@ -203,11 +224,48 @@ do navegador que abrir.
 Em cerca de 40 segundos ele mostra a URL, algo como
 `https://planner-semanal.vercel.app`.
 
-### 2.3 Voltar ao Supabase
+### 2.3 Se a Vercel recusar o deploy
+
+Mensagem: *"the commit author did not have contributing access… Hobby Plan does
+not support collaboration for private repositories"*.
+
+**O que aconteceu:** o e-mail que assinou o commit não é o da sua conta do
+GitHub. No plano gratuito, a Vercel só constrói commits do próprio dono quando
+o repositório é privado.
+
+Duas saídas — a primeira é a recomendada.
+
+#### Saída 1 — acertar o e-mail do commit *(mantém o repositório privado)*
+
+1. Abra **github.com/settings/emails**
+2. Copie o e-mail marcado como **Primary**
+   - Se estiver ligado *"Keep my email addresses private"*, copie o endereço no
+     formato `12345678+Felipendev@users.noreply.github.com` que aparece ali
+3. Duplo clique em **`corrigir-autor.bat`**
+4. Cole o e-mail quando ele pedir
+
+O script reescreve o autor do commit e reenvia. A Vercel dispara um build novo
+sozinha em seguida.
+
+#### Saída 2 — tornar o repositório público
+
+O código não guarda segredo nenhum: a URL e a chave do Supabase são digitadas
+por você no app e ficam no seu navegador, nunca no repositório. Seus dados
+pessoais estão fora pelo `.gitignore`.
+
+1. **github.com/Felipendev/planner-semanal** → *Settings*
+2. Role até **Danger Zone** → *Change repository visibility* → **Public**
+
+A restrição da Vercel some, porque ela vale só para repositórios privados.
+
+> Preferi a Saída 1 no guia porque não há razão para expor o repositório —
+> mas a Saída 2 é segura e resolve em 30 segundos.
+
+### 2.4 Voltar ao Supabase
 **Copie a URL da Vercel e volte ao passo 1.4** para autorizá-la em
 *Authentication → URL Configuration*. Sem isso o login não conclui.
 
-### Publicar alterações depois
+### 2.5 Publicar alterações depois
 Duplo clique em **`atualizar.bat`**. Ele sincroniza `planner-semanal.html`
 com `web/index.html`, pergunta uma descrição e envia. A Vercel republica sozinha.
 
@@ -254,12 +312,24 @@ Clique em **Salvar e conectar**.
 
 ### 3.3 Entrar na conta
 
-A mesma janela passa a mostrar duas opções:
+Digite seu e-mail e clique em **Enviar acesso por e-mail**. Você recebe uma
+mensagem com **duas formas** de entrar:
 
-- **Receber link por e-mail** — digite seu e-mail → abra a caixa de entrada →
-  clique no link. Ele traz você de volta ao app já autenticado.
-  *(Se não chegar em 1 minuto, veja o lixo eletrônico.)*
-- **Entrar com Google** — só funciona se você fez o Caminho B do passo 1.3.
+**a) Clicar no link** — abre o app já autenticado.
+
+**b) Código de 6 dígitos** — copie o código do e-mail, cole no segundo campo da
+janela e clique em **Entrar**.
+
+> O código existe por um motivo prático: alguns servidores de e-mail
+> *pré-visitam* os links das mensagens por segurança, e como o link do Supabase
+> é de uso único, ele já chega gasto. Quando isso acontece você vê
+> `otp_expired` mesmo tendo acabado de recebê-lo. O código não tem esse problema.
+>
+> Se o seu e-mail só mostrar o link e não o código, dá para incluí-lo:
+> **Supabase → Authentication → Emails → Magic Link**, e acrescente
+> `{{ .Token }}` ao corpo da mensagem.
+
+Ambos valem por **1 hora** e só podem ser usados **uma vez**.
 
 ### 3.4 Conferir
 
@@ -286,10 +356,37 @@ Nos aparelhos seguintes, ele **baixa e funde** com o que houver local.
 1. Abra a URL no **Chrome do Android** (ou Safari no iPhone)
 2. Menu → **Adicionar à tela de início**
 3. Abre em tela cheia, com ícone próprio, e funciona sem internet
+4. Toque no botão **Conectar** e entre com o mesmo e-mail do computador
 
 No computador, o Chrome mostra um ícone de instalar na barra de endereço.
 
----
+### Se o celular estiver com uma versão antiga
+
+O app guarda uma cópia local para funcionar offline, e às vezes ela demora a
+ser trocada. Duas formas de forçar:
+
+**Pelo próprio app:** botão **Nuvem** → **Buscar atualização**. Ele limpa a
+cópia guardada e recarrega. A janela mostra a **versão instalada** naquele
+aparelho — dá para comparar com a do computador.
+
+**Na mão:** Chrome do Android → ⋮ → *Configurações do site* → *Limpar dados*,
+ou desinstalar e reinstalar o atalho.
+
+> Quando você publica uma versão nova, os aparelhos que já estiverem abertos
+> recebem um aviso: *"Versão nova disponível. Clique para atualizar"*.
+
+### Quando os dados aparecem no outro aparelho
+
+O envio é **automático**, cerca de 2 segundos depois de qualquer alteração.
+Você não precisa salvar nada.
+
+A busca acontece:
+- ao abrir o app
+- **ao voltar para ele** (trocar de aba, desbloquear o celular)
+- a cada minuto com o app aberto
+- ao recuperar a conexão
+
+Se quiser forçar: **Nuvem → Sincronizar agora**.
 
 ## Parte 5 — Impedir o banco de hibernar
 
@@ -342,7 +439,12 @@ Em ambos os casos, o arquivo que vai para o ar é `web/index.html`.
 |---|---|
 | Login abre e volta sem entrar | A URL da Vercel não foi autorizada no passo 1.4 |
 | Link do e-mail não chega | Verifique o lixo eletrônico. O Supabase gratuito envia poucos e-mails por hora |
+| `requested path is invalid` | O **Site URL** foi salvo sem `https://` — passo 1.4 |
+| `otp_expired` logo após receber | O link foi consumido pelo antivírus do e-mail. Use o **código de 6 dígitos** |
 | Botão da nuvem vermelho | Chave errada, ou o `schema.sql` não foi executado |
 | Dados não aparecem no outro aparelho | Você entrou com contas Google diferentes |
 | Notificação não aparece | Assistente de Foco do Windows, ou permissão negada no navegador |
-| App não atualiza após deploy | Recarregue com `Ctrl+Shift+R` — o service worker guarda a versão anterior |
+| App não atualiza após deploy | **Nuvem → Buscar atualização**, ou `Ctrl+Shift+R` no computador |
+| Celular com versão diferente do PC | Compare em **Nuvem → Versão instalada aqui** e use *Buscar atualização* |
+| Marcou no PC e não aparece no celular | Volte ao app no celular (ele busca ao ganhar foco) ou use *Sincronizar agora* |
+| Vercel recusa: *commit author did not have contributing access* | E-mail do commit diferente do GitHub — rode `corrigir-autor.bat` (passo 2.3) |

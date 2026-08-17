@@ -1,6 +1,6 @@
 /* Service worker: o app abre offline; a rede é tentada primeiro
    para você sempre pegar a versão nova quando houver. */
-const CACHE = 'planner-v1';
+const CACHE = 'planner-v2';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -13,6 +13,10 @@ self.addEventListener('activate', e => {
       .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
+});
+
+self.addEventListener('message', e => {
+  if (e.data && e.data.tipo === 'assumir') self.skipWaiting();
 });
 
 self.addEventListener('fetch', e => {

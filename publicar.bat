@@ -23,9 +23,22 @@ if exist ".git" (
 
 echo Inicializando repositorio...
 git init -q
-git config user.email "felipehenrique.pds@gmail.com"
-git config user.name "Felipe Pedroso"
 git config core.autocrlf false
+
+echo.
+echo O e-mail abaixo precisa ser o MESMO da sua conta do GitHub,
+echo senao a Vercel recusa o deploy em repositorio privado.
+echo Consulte em: github.com/settings/emails
+echo.
+set /p EMAIL="E-mail da conta GitHub: "
+if "%EMAIL%"=="" (
+  echo [ERRO] E-mail obrigatorio.
+  pause & exit /b 1
+)
+set /p NOME="Nome para os commits (enter para 'Felipendev'): "
+if "%NOME%"=="" set NOME=Felipendev
+git config user.email "%EMAIL%"
+git config user.name "%NOME%"
 
 echo Preparando arquivos...
 git add -A

@@ -628,6 +628,16 @@ input[type=checkbox]{width:auto;}
 .cent{display:flex;flex-wrap:wrap;gap:7px;align-items:center;}
 .cent input{flex:1;min-width:150px;}
 .cou{font-size:11.5px;color:var(--ink3);}
+.verbox{display:flex;align-items:center;gap:10px;justify-content:space-between;
+  font-size:11.5px;color:var(--ink3);margin-bottom:12px;padding-bottom:11px;
+  border-bottom:1px solid var(--line2);}
+.verbox b{color:var(--ink2);font-variant-numeric:tabular-nums;}
+.urlbox{background:var(--sunken);border-radius:8px;padding:11px 13px;margin-bottom:14px;}
+.ulab{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--ink3);font-weight:600;margin-bottom:6px;}
+.urlbox code{display:block;font-size:12px;word-break:break-all;background:var(--surface);
+  border:1px solid var(--line);border-radius:5px;padding:6px 8px;margin-bottom:7px;}
+.urlbox small{display:block;font-size:11px;color:var(--ink3);line-height:1.5;margin-top:7px;}
 .hint{font-size:11.5px;color:var(--ink3);line-height:1.5;margin-top:-4px;margin-bottom:13px;}
 
 /* ── toasts ────────────────────────────────────────── */
@@ -4098,6 +4108,7 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden) checkAle
      · registros (conclusões, água, leitura, dias fechados)
        → UNIÃO, nunca sobrescrita. É o dado que dói perder.
    ═══════════════════════════════════════════════════════ */
+const APP_VER='2026-08-16.2';
 const CLOUD_KEY='planner_cloud';
 let sb=null, sbUser=null, cloudState='off', cloudTimer=null, cloudPending=false, provs=null;
 
@@ -4204,18 +4215,21 @@ function mergeEstado(local,remoto,remotoMaisNovo){
   return base;
 }
 
-async function cloudPull(){
+async function cloudPull(silencioso){
   if(!sb||!sbUser) return;
   try{
     const {data,error}=await sb.from('estado').select('dados,atualizado_em').eq('user_id',sbUser.id).maybeSingle();
     if(error) throw error;
     if(!data){ await cloudPush(true); return; }          // primeiro acesso: sobe o que existe aqui
+    const antes=JSON.stringify(S);
     const remoto=data.dados, localTs=S.atualizado||0;
     const remotoTs=new Date(data.atualizado_em).getTime();
     S=mergeEstado(S,remoto,remotoTs>localTs);
+    const mudou=JSON.stringify(S)!==antes;
     S.atualizado=Math.max(localTs,remotoTs);
     localStorage.setItem(LS,JSON.stringify(S));
-    paint(); toast('Dados sincronizados.');
+    if(mudou){ paint(); if(!silencioso) toast('Dados sincronizados.'); }
+    _ultPull=Date.now();
   }catch(e){ console.warn('cloudPull',e); cloudState='erro'; paintCloud(); }
 }
 
@@ -4236,7 +4250,19 @@ function cloudAgenda(){
   cloudPending=true; paintCloud();
   cloudTimer=setTimeout(()=>cloudPush(true),2500);
 }
-window.addEventListener('online',()=>{ if(sbUser) cloudPush(true); });
+window.addEventListener('online',()=>{ if(sbUser){ cloudPush(true); cloudPull(true); } });
+
+/* O celular ficava com dados velhos porque só buscava ao abrir do zero.
+   Agora busca ao voltar para a aba, ao focar a janela e a cada minuto. */
+let _ultPull=0;
+function cloudTalvezPull(){
+  if(!sbUser||document.hidden) return;
+  if(Date.now()-_ultPull < 20000) return;
+  _ultPull=Date.now(); cloudPull(true);
+}
+document.addEventListener('visibilitychange',cloudTalvezPull);
+window.addEventListener('focus',cloudTalvezPull);
+setInterval(cloudTalvezPull,60000);
 
 function paintCloud(){
   const el=document.getElementById('cloud'); if(!el) return;
@@ -4262,8 +4288,12 @@ function nuvemModal(){
         : 'Sem nuvem o planner funciona normalmente, mas cada aparelho guarda os seus próprios dados.'}</p>
       ${sb&&!sbUser?`
       <div class="cent">
-        <input id="cEm" type="email" placeholder="seu@email.com" value="felipehenrique.pds@gmail.com">
-        <button class="b sm solid" id="cMail">Receber link por e-mail</button>
+        <input id="cEm" type="email" placeholder="seu@email.com" value="${esc((cloudCfg()||{}).ultimoEmail||'')}">
+        <button class="b sm solid" id="cMail">Enviar acesso por e-mail</button>
+      </div>
+      <div class="cent" style="margin-top:7px">
+        <input id="cCod" placeholder="ou cole aqui o código de 6 dígitos" inputmode="numeric" maxlength="8">
+        <button class="b sm line" id="cVer">Entrar</button>
       </div>
       ${provs&&provs.google
         ? `<div style="margin-top:9px"><button class="b sm line" id="cLogin">ou entrar com Google</button></div>`
@@ -4277,6 +4307,17 @@ function nuvemModal(){
       <input id="cU" value="${esc(c.url)}" placeholder="https://xxxx.supabase.co"></label>
     <label class="fld"><span>Chave pública do projeto</span>
       <input id="cK" value="${esc(c.key)}" placeholder="sb_publishable_... ou eyJhbGciOi..."></label>
+    <div class="verbox">
+      <span>Versão instalada aqui: <b>${APP_VER}</b></span>
+      <button class="b xs line" id="cUpd">Buscar atualização</button>
+    </div>
+    <div class="urlbox">
+      <span class="ulab">Este endereço precisa estar cadastrado no Supabase</span>
+      <code id="cSelf">${esc(location.origin+location.pathname)}</code>
+      <button class="b xs line" id="cCopy">copiar</button>
+      <small>Em <b>Authentication → URL Configuration</b>, cole em <b>Site URL</b> e em <b>Redirect URLs</b>.
+      Precisa começar com <b>https://</b> — sem isso o link do e-mail volta com "requested path is invalid".</small>
+    </div>
     <p class="hint">No Supabase: <b>Connect</b> no topo, ou ⚙ <b>Project Settings → API Keys</b>.
     Use a <b>Publishable key</b> (aba nova) ou a <b>anon / public</b> (aba legada) — as duas servem.
     Nunca a <i>secret</i> nem a <i>service_role</i>: essas ignoram a segurança do banco e o app as recusa.</p>
@@ -4284,15 +4325,42 @@ function nuvemModal(){
       ${c.url?`<button class="b danger left" id="cDel">Desconectar</button>`:''}
       <button class="b" id="cX">Fechar</button>
       <button class="b solid" id="cOk">Salvar e conectar</button></div>`;
+  const up=md.querySelector('#cUpd');
+  if(up) up.onclick=async()=>{
+    up.textContent='buscando…';
+    try{ if('serviceWorker' in navigator){
+      const rs=await navigator.serviceWorker.getRegistrations();
+      await Promise.all(rs.map(r=>r.update()));
+      await Promise.all(rs.map(r=>r.unregister()));
+    } if(window.caches){ const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); }
+    }catch(e){}
+    location.reload(true); };
+  const cp=md.querySelector('#cCopy');
+  if(cp) cp.onclick=()=>{ const t=md.querySelector('#cSelf').textContent;
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject())
+      .then(()=>{cp.textContent='copiado';setTimeout(()=>cp.textContent='copiar',1500);})
+      .catch(()=>{ const r=document.createRange(); r.selectNode(md.querySelector('#cSelf'));
+        getSelection().removeAllRanges(); getSelection().addRange(r); }); };
   md.querySelector('#cX').onclick=shut;
   const l=md.querySelector('#cLogin'); if(l) l.onclick=cloudLogin;
+  const vv=md.querySelector('#cVer');
+  if(vv) vv.onclick=async()=>{
+    const email=md.querySelector('#cEm').value.trim();
+    const token=md.querySelector('#cCod').value.replace(/\D/g,'');
+    if(!email||!token){ alert('Preencha o e-mail e o código.'); return; }
+    const {error}=await sb.auth.verifyOtp({email,token,type:'email'});
+    if(error) alert('Código não aceito: '+error.message+'\n\nPeça um novo e use dentro de 1 hora.');
+    else { shut(); toast('Conectado.'); } };
   const em=md.querySelector('#cMail');
   if(em) em.onclick=async()=>{
     const v=md.querySelector('#cEm').value.trim();
     if(!v){ alert('Escreva o e-mail.'); return; }
     em.disabled=true; em.textContent='Enviando…';
-    if(await cloudLoginEmail(v)){ shut();
-      toast('Link enviado para '+v+'. Abra o e-mail e clique — pode cair no lixo eletrônico.',true); }
+    if(await cloudLoginEmail(v)){
+      const c=cloudCfg()||{}; c.ultimoEmail=v; setCloudCfg(c);
+      em.textContent='Reenviar';
+      md.querySelector('#cCod').focus();
+      toast('Enviado para '+v+'. Clique no link do e-mail — ou copie o código de 6 dígitos e cole aqui.',true); }
     else { em.disabled=false; em.textContent='Receber link por e-mail'; } };
   const o=md.querySelector('#cOut'); if(o) o.onclick=()=>{cloudLogout();shut();};
   const n=md.querySelector('#cNow'); if(n) n.onclick=async()=>{ await cloudPull(); await cloudPush(); shut(); };
@@ -4453,7 +4521,23 @@ window.addEventListener('load',()=>{ setTimeout(async()=>{
     setTimeout(()=>toast('<b>Site no ar.</b><br>Falta ligar a nuvem para usar no celular com os mesmos dados. Clique aqui.',true,nuvemModal),1500);
   }
 },300); });
-if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); initFS();
+if('serviceWorker' in navigator) window.addEventListener('load',()=>{
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    reg.addEventListener('updatefound',()=>{
+      const novo=reg.installing; if(!novo) return;
+      novo.addEventListener('statechange',()=>{
+        if(novo.state==='installed' && navigator.serviceWorker.controller)
+          toast('<b>Versão nova disponível.</b><br>Clique para atualizar este aparelho.',true,
+            ()=>{ novo.postMessage({tipo:'assumir'}); setTimeout(()=>location.reload(),300); });
+      });
+    });
+    setInterval(()=>reg.update().catch(()=>{}), 300000);
+  }).catch(()=>{});
+  let recarregou=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(recarregou) return; recarregou=true; location.reload();
+  });
+}); initFS();
 
 (function greet(){
   const k='g:'+iso(TODAY()); if(S.milestones[k])return;
