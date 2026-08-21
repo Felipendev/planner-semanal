@@ -32,7 +32,27 @@ set /p MSG="Descreva a mudanca (enter para 'ajustes'): "
 if "%MSG%"=="" set MSG=ajustes
 
 git commit -q -m "%MSG%"
-git push
+
+rem ---------- reancorar se o historico local estiver separado ----------
+git fetch -q origin main 2>nul
+git rev-parse --verify origin/main >nul 2>nul
+if not errorlevel 1 (
+  git merge-base --is-ancestor origin/main HEAD
+  if errorlevel 1 (
+    echo Historico local separado do remoto. Reancorando...
+    git reset --soft origin/main
+    git add -A
+    git diff --cached --quiet
+    if errorlevel 1 (
+      git commit -q -m "%MSG%"
+    ) else (
+      echo Os arquivos ja sao identicos aos do GitHub. Nada a enviar.
+      pause & exit /b 0
+    )
+  )
+)
+
+git push -u origin main
 if errorlevel 1 (
   echo.
   echo [ERRO] Falha ao enviar. Verifique a conexao e o login do GitHub.

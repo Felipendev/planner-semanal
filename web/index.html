@@ -572,6 +572,68 @@ input[type=checkbox]{width:auto;}
 .tk .tq{display:flex;gap:4px;margin-top:8px;align-items:center;}
 .tk .tq input{width:52px;padding:3px 6px;font-size:12px;text-align:center;}
 
+/* ── 12b · LIVROS ──────────────────────────────────── */
+.livros{overflow-y:auto;height:100%;}
+.livros .wrap{max-width:1020px;margin:0 auto;padding:26px 22px 60px;}
+.sect{margin-top:26px;}
+.sect>h2{font-size:14px;font-weight:600;letter-spacing:-.01em;margin-bottom:11px;
+  padding-bottom:7px;border-bottom:1px solid var(--line2);display:flex;gap:8px;align-items:baseline;}
+.lbar{display:flex;gap:12px;align-items:center;margin-top:18px;flex-wrap:wrap;}
+.lbar .f2{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink3);}
+.lbar .f2 input{padding:4px 7px;font-size:12.5px;text-align:center;}
+
+.cap{border-radius:4px;object-fit:cover;background:var(--sunken);display:block;flex-shrink:0;
+  box-shadow:0 2px 8px rgba(0,0,0,.16);}
+.cap.g{width:96px;height:144px;}
+.cap.m{width:100%;aspect-ratio:2/3;height:auto;}
+.cap.p{width:34px;height:51px;box-shadow:0 1px 4px rgba(0,0,0,.14);}
+.cap.sem{display:grid;place-items:center;border:1px solid var(--line);}
+.cap.sem span{font-size:22px;font-weight:600;color:var(--ink4);}
+.cap.p.sem span{font-size:13px;} .cap.m.sem span{font-size:26px;}
+
+.lcard{display:flex;gap:16px;padding:15px;border:1px solid var(--line);border-radius:9px;
+  background:var(--surface);margin-bottom:10px;}
+.linfo{flex:1;min-width:0;}
+.ltit{font-size:15px;font-weight:600;letter-spacing:-.012em;}
+.laut{font-size:12px;color:var(--ink3);margin-top:1px;}
+.lprog{height:6px;border-radius:3px;background:var(--sunken);overflow:hidden;margin:10px 0 6px;}
+.lprog>i{display:block;height:100%;border-radius:3px;background:var(--accent);transition:width .35s;}
+.lnum{font-size:12.5px;color:var(--ink2);}
+.lnum b{font-variant-numeric:tabular-nums;}
+.lmeta{font-size:11.5px;color:var(--ink3);margin-top:3px;}
+.lacts{display:flex;gap:5px;align-items:center;margin-top:11px;flex-wrap:wrap;}
+.lhoje{font-size:11.5px;color:var(--ink3);margin-right:2px;}
+.lacts input{width:60px;padding:3px 6px;font-size:12px;text-align:center;}
+
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(124px,1fr));gap:16px;}
+.lmini{min-width:0;}
+.lmt{font-size:12.5px;font-weight:550;margin-top:7px;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.lma{font-size:11px;color:var(--ink3);margin-top:2px;}
+.lmb{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;}
+.lmini.done .cap{opacity:.82;}
+
+.lproj{display:grid;gap:8px;margin-top:12px;}
+.lpj{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line2);
+  border-radius:7px;background:var(--sunken);}
+.lpj b{font-size:12.5px;display:block;}
+.lpj small{font-size:11px;color:var(--ink3);}
+.lpj.fora{opacity:.5;}
+.lpj.fora small{color:var(--warn);}
+
+.bres{display:grid;gap:7px;margin-top:12px;max-height:340px;overflow-y:auto;}
+.bri{display:flex;gap:10px;align-items:center;padding:8px;border:1px solid var(--line2);border-radius:7px;}
+.bri>div{flex:1;min-width:0;}
+.bri b{font-size:12.5px;display:block;line-height:1.3;}
+.bri small{font-size:11px;color:var(--ink3);}
+.brb{display:flex;gap:4px;flex-shrink:0;flex-direction:column;}
+@media(max-width:640px){
+  .lcard{gap:12px;padding:12px;}
+  .cap.g{width:70px;height:105px;}
+  .lgrid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px;}
+  .brb{flex-direction:row;}
+}
+
 /* ── modal ─────────────────────────────────────────── */
 .bd{position:fixed;inset:0;background:rgba(15,15,14,.44);
   display:none;align-items:flex-start;justify-content:center;z-index:200;padding:60px 16px 20px;
@@ -740,6 +802,7 @@ body.haspomo .undo{bottom:104px;}
     <button class="b" data-v="day">Dia</button>
     <button class="b" data-v="week">Semana</button>
     <button class="b" data-v="month">Mês</button>
+    <button class="b" data-v="livros">Livros</button>
   </div>
   <span class="grow"></span>
   <span class="stat" id="hstat"></span>
@@ -1006,6 +1069,7 @@ function defaults(){
     pomo:{cfg:{focus:25,short:5,long:15,cycles:4}, perCat:{}, run:null, log:{}, total:0, scope:'day'},
     protocol:{name:'Protocolo 180', start:'2026-08-03', days:180},
     teste:null,
+    livros:[], leitura:{metaDia:10},
     plan:'A',
     challenge:null, chalOpts:[], chalDone:[],
     closed:{}, milestones:{}, dismissed:{},
@@ -1219,6 +1283,24 @@ function ensureExtras(){
   if(ch) save();
 }
 const OUT_RX=/Academia|Caminhada|bike|Surf|Vôlei|Culto|Desbravadores|igreja|comunhão|Servir|praia|Supermercado|Feira|Padaria|Mercado|sair para/i;
+function ensureLivros(){
+  if(S.milestones['estante']) return;
+  S.livros=S.livros||[]; S.leitura=S.leitura||{metaDia:10};
+  const t=(S.trackers||[]).find(x=>x.id==='t1'||/leitura/i.test(x.label||''));
+  if(t){
+    S.leitura.metaDia=t.dailyGoal||10;
+    if(t.item&&t.item.title) S.livros.push({id:uid('l'),titulo:t.item.title,autor:'',
+      paginas:t.item.total||0,capa:'',status:'lendo',inicio:t.item.startedISO||iso(TODAY()),
+      fim:null,log:Object.assign({},t.log||{}),offset:0});
+    (t.archive||[]).forEach(a=>S.livros.push({id:uid('l'),titulo:a.title,autor:'',
+      paginas:a.total||0,capa:'',status:'lido',
+      inicio:iso(addD(pISO(a.finished),-(a.days||1))),fim:a.finished,log:{},offset:a.total||0}));
+    S.trackers=(S.trackers||[]).filter(x=>x!==t);      // sai da lista de hábitos
+    // as atividades da rotina deixam de apontar para o tracker
+    Object.values(S.template||{}).forEach(arr=>arr.forEach(b=>{ if(b.trk===t.id) b.trk=null; }));
+  }
+  S.milestones['estante']=true; save();
+}
 function ensureAlertas(){
   if(S.milestones['alertas-area']) return;
   const pad={treino:15,idioma:10,estudo:10,leitura:5,projeto:10,trabalho:5};
@@ -1415,6 +1497,14 @@ function trophyGroups(L){
     add(c.label,c.color,[10,25,50,100,250,500,1000].map(x=>
       ({n:`${x}h de ${c.label.toLowerCase()}`,now:hrs,tgt:x,f:v=>v.toFixed(1)+'h'})));
   });
+  {
+    const fin=(S.livros||[]).filter(l=>l.status==='lido').length;
+    const un=(S.livros||[]).reduce((a,l)=>a+Object.values(l.log||{}).reduce((x,y)=>x+(+y||0),0),0);
+    add('Leitura','#4a6fa5',[
+      ...[1,3,5,10,25,50].map(k=>({n:`${k} livro${k>1?'s':''} terminado${k>1?'s':''}`,now:fin,tgt:k,f:nfmt})),
+      ...[500,1000,3000,5000,10000,25000].map(k=>({n:`${nfmt(k)} páginas lidas`,now:un,tgt:k,f:nfmt})),
+    ]);
+  }
   (S.trackers||[]).forEach(t=>{
     const fin=(t.archive||[]).length;
     const un=Object.values(t.log||{}).reduce((a,b)=>a+(+b||0),0);
@@ -2030,6 +2120,24 @@ function renderHome(){
       <div class="rec"><div class="rl">Maior sequência</div><div class="rv">${L.best} dias</div><div class="rd">${L.streak>=L.best&&L.best>0?'é a atual':'atual: '+L.streak+' dias'}</div></div>
     </div></div>`;
 
+  {
+    const at=lendoAgora()[0], feitos=lidos(), un=paginasTotais(), mt=metaPag();
+    const dd=new Set(); livros().forEach(l=>Object.entries(l.log||{}).forEach(([k,v])=>{ if(+v>0) dd.add(k); }));
+    h+=`<div class="card2 full"><h2>Leitura<button class="b xs" id="hLiv">Abrir estante</button></h2>`;
+    if(at||feitos.length){
+      h+='<div class="lproj">';
+      if(at) h+=`<div class="lpj">${capaHTML(at,'p')}<div style="flex:1;min-width:0">
+        <b>${esc(at.titulo)}</b><small>lendo · página ${paginaAtual(at)} de ${at.paginas||'?'} · faltam ${faltam(at)}</small>
+        <div class="lprog" style="margin:6px 0 0"><i style="width:${pctLivro(at)}%"></i></div></div>
+        <span class="num" style="font-size:13px;font-weight:600">${pctLivro(at)}%</span></div>`;
+      [...feitos].reverse().slice(0,6).forEach(l=>h+=`<div class="lpj">${capaHTML(l,'p')}
+        <div style="flex:1;min-width:0"><b>${esc(l.titulo)}</b>
+        <small>terminado${l.fim?' em '+fmtS(pISO(l.fim)):''}${l.inicio?` · ${diasDoLivro(l)} dias · ${mediaDoLivro(l).toFixed(1)} pág/dia`:''}</small></div></div>`);
+      h+='</div>';
+      h+=`<p class="cx" style="margin-top:9px">No total: <b>${un.toLocaleString('pt-BR')} páginas</b> em ${dd.size} dia(s) de leitura registrada${feitos.length?`, com ${feitos.length} livro(s) terminado(s)`:''}. Meta atual: ${mt} páginas por dia${dd.size?`, média real de ${(un/dd.size).toFixed(1)}`:''}.</p>`;
+    } else h+=`<p class="cx">Nenhum livro na estante ainda. Abra a aba <b>Livros</b> e busque pelo título — a capa e o número de páginas vêm prontos.</p>`;
+    h+='</div>';
+  }
   (S.trackers||[]).forEach(t=>{
     const arch=t.archive||[], it=t.item||{};
     const un=Object.values(t.log||{}).reduce((a,b)=>a+(+b||0),0);
@@ -2080,6 +2188,7 @@ function renderHome(){
     const o=S.chalOpts[+b.dataset.nd];
     S.challenge={name:o.n,days:o.d,start:new Date().toISOString()}; save(); paint();
     toast(`Desafio aceito: ${o.n}. ${o.d} dias começando agora.`,true); });
+  const hl=document.getElementById('hLiv'); if(hl) hl.onclick=()=>setView('livros');
   const nr=document.getElementById('ndR'); if(nr) nr.onclick=()=>{ rollChal(); renderHome(); };
   const dc=document.getElementById('dCon'); if(dc) dc.onclick=()=>{
     const c2=S.challenge; S.chalDone=S.chalDone||[];
@@ -2352,6 +2461,13 @@ function renderDay(){
 
   if(editavel){
     h+=`<div class="card2"><h2>Registro do dia${isT?'':' · '+fmtS(d)}</h2>`;
+    const _at=lendoAgora()[0];
+    h+=`<div class="regrow"><span class="rl2">Leitura
+        <small>${_at?esc(_at.titulo)+' · faltam '+faltam(_at)+' pág':'sem livro em andamento'} · meta ${metaPag()}/dia</small></span>
+      <span class="rq">${_at?`<button class="b xs line" data-lp="${_at.id}:-5">−5</button>
+        <input type="number" class="num" data-lv="${_at.id}" value="${(_at.log||{})[k]||0}" min="0">
+        <button class="b xs line" data-lp="${_at.id}:5">+5</button><span class="ru">páginas</span>`
+        :`<button class="b xs line" id="dLivro">cadastrar livro</button>`}</span></div>`;
     (S.trackers||[]).forEach(t=>{
       const it2=t.item||{}, v=(t.log||{})[k]||0;
       h+=`<div class="regrow"><span class="rl2">${esc(t.label)}
@@ -2392,6 +2508,13 @@ function renderDay(){
   document.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{ addWater(+b.dataset.w,k); renderDay(); });
   const wS=document.getElementById('wSet');
   if(wS) wS.onchange=()=>{ setWater(+wS.value||0,k); renderDay(); };
+  document.querySelectorAll('[data-lp]').forEach(b=>b.onclick=()=>{
+    const [id,nn]=b.dataset.lp.split(':');
+    logPaginas(id,k,Math.max(0,(((livroPorId(id)||{}).log||{})[k]||0)+ +nn)); renderDay(); });
+  document.querySelectorAll('[data-lv]').forEach(i=>i.onchange=()=>{
+    logPaginas(i.dataset.lv,k,Math.max(0,+i.value||0)); renderDay(); });
+  const dLi=document.getElementById('dLivro');
+  if(dLi) dLi.onclick=()=>{ setView('livros'); livrosModalNovo(); };
   document.querySelectorAll('[data-ta]').forEach(b=>b.onclick=()=>{
     const [id,n]=b.dataset.ta.split(':'); const t=trk(id);
     logUnits(t,Math.max(0,((t.log||{})[k]||0)+ +n),k); renderDay(); });
@@ -2760,6 +2883,12 @@ function protoTabelas(){
     extras.push([g.label, brl(g.saved||0), brl(noFim),
       noFim>=g.target?'meta alcançada dentro do protocolo':`${Math.round(noFim/g.target*100)}% do valor`]);
   });
+  {
+    const pj=projecaoLivros(), un=paginasTotais(), fin=lidos().length;
+    extras.push(['Leitura', `${fin} livro${fin===1?'':'s'} · ${nfmt(un)} pág`,
+      `~${fin+pj.inteiros} livro${(fin+pj.inteiros)===1?'':'s'}`,
+      pj.texto]);
+  }
   (S.trackers||[]).forEach(t=>{
     if(!t.dailyGoal) return;
     const un=Object.values(t.log||{}).reduce((a,b)=>a+(+b||0),0);
@@ -3047,6 +3176,28 @@ function alerts(){
       if(dl>0) add('p'+g.id,'info',`<b>${esc(g.label)}</b> — ${dl} dias até a data alvo, ${p}% concluído.`); }
   });
 
+  {
+    const at=(S.livros||[]).find(l=>l.status==='lendo');
+    const hj=paginasDoDia(iso(TODAY())), mt=metaPag();
+    if(at&&at.paginas){
+      const f=faltam(at), pc=pctLivro(at);
+      milestone('liv'+at.id,pc,x=>`"${at.titulo}" em ${x}%.${f>0?' Faltam '+f+' páginas.':''}`);
+      if(f<=0) add('livfim','win',`Você chegou ao fim de <b>${esc(at.titulo)}</b>. Marque como terminado na aba Livros.`);
+      else{
+        const dias=Math.ceil(f/mt);
+        if(hj>=mt) add('livdia','win',`Meta de leitura batida: <b>${hj}/${mt} páginas</b>. Faltam ${f} para fechar o livro.`);
+        else add('livdia','info',`<b>${hj}/${mt} páginas</b> hoje. Nesse ritmo, "${esc(at.titulo)}" acaba em <b>${fmtS(addD(TODAY(),dias))}</b>.`);
+        if(f<=mt*2) add('livperto','win',`Faltam só <b>${f} páginas</b> para terminar "${esc(at.titulo)}".`);
+      }
+      const rr=ritmoLeitura(30);
+      if(rr.dias>=3){
+        if(rr.media<mt*.7) add('livritmo','warn',`Sua média real é ${rr.media.toFixed(1)} páginas por dia de leitura, contra a meta de ${mt}. Suba o ritmo ou baixe a meta para ela virar verdade.`);
+        else if(rr.media>mt*1.3) add('livritmo','win',`Média de ${rr.media.toFixed(1)} páginas por dia, acima da meta. Dá para subir a meta.`);
+      }
+    } else if(!(S.livros||[]).length){
+      add('livvazio','info',`Nenhum livro na estante. Abra a aba <b>Livros</b> e busque pelo título — capa e número de páginas vêm prontos.`);
+    } else add('livprox','warn',`Você terminou o último livro e ainda não começou outro. Escolha o próximo na aba Livros.`);
+  }
   (S.trackers||[]).forEach(t=>{
     const it=t.item||{}; if(!it.title||!it.total)return;
     const left=Math.max(0,it.total-(it.done||0)), p=Math.min(100,Math.round((it.done||0)/it.total*100));
@@ -3148,6 +3299,24 @@ function renderSide(){
   });
   h+=`</div><div style="font-size:11.5px;color:var(--ink3);margin-top:9px">${W.td} de ${W.t} atividades · ${streak()} dias seguidos</div></div>`;
 
+  h+=`<div class="pn"><h3>Leitura<button class="b xs" id="lVer">Estante</button></h3>`;
+  {
+    const kk=iso(TODAY()), at=lendoAgora()[0], hj=paginasDoDia(kk), mt=metaPag();
+    const pc=Math.min(100,Math.round(hj/mt*100));
+    if(at){
+      h+=`<div class="tk"><div class="tt"><span>${esc(at.titulo)}</span>
+        <span class="num" style="font-size:11.5px;color:var(--ink3)">${pctLivro(at)}%</span></div>
+        <div class="ti">página ${paginaAtual(at)} de ${at.paginas||'?'} · faltam ${faltam(at)}</div>
+        <div class="ti" style="margin-top:7px">hoje: <b class="num">${hj}</b> de ${mt} páginas</div>
+        <div class="lprog"><i style="width:${pc}%;background:${hj>=mt?'var(--good)':'var(--accent)'}"></i></div>
+        <div class="tq"><button class="b xs line" data-sp="${at.id}:5">+5</button>
+          <button class="b xs line" data-sp="${at.id}:10">+10</button>
+          <input type="number" class="num" data-sv="${at.id}" value="${(at.log||{})[kk]||0}" min="0"></div></div>`;
+      const rr=ritmoLeitura(30);
+      if(rr.dias>=3) h+=`<p class="hint" style="margin-top:8px">Ritmo real: <b>${rr.media.toFixed(1)}</b> páginas por dia de leitura.</p>`;
+    } else h+=`<p class="hint">Nenhum livro em andamento. <a href="#" id="lAdd" style="color:var(--accent)">Adicionar</a>.</p>`;
+  }
+  h+='</div>';
   h+=`<div class="pn"><h3>Hábitos<button class="b xs" id="tEdit">Editar</button></h3>`;
   (S.trackers||[]).forEach(t=>{
     const it=t.item||{}, today=(t.log||{})[iso(TODAY())]||0;
@@ -3187,6 +3356,13 @@ function renderSide(){
   side.querySelector('#qLib').onclick=quotesModal;
   side.querySelector('#gEdit').onclick=goalsModal;
   side.querySelector('#tEdit').onclick=trackersModal;
+  const _lv=side.querySelector('#lVer'); if(_lv) _lv.onclick=()=>setView('livros');
+  const _la=side.querySelector('#lAdd'); if(_la) _la.onclick=e=>{e.preventDefault();setView('livros');livrosModalNovo();};
+  side.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{
+    const [id,nn]=b.dataset.sp.split(':'), kk=iso(TODAY());
+    logPaginas(id,kk,Math.max(0,(((livroPorId(id)||{}).log||{})[kk]||0)+ +nn)); paint(); });
+  side.querySelectorAll('[data-sv]').forEach(i=>i.onchange=()=>{
+    logPaginas(i.dataset.sv,iso(TODAY()),Math.max(0,+i.value||0)); paint(); });
   side.querySelectorAll('.gl').forEach(e=>e.onclick=()=>goalModal(e.dataset.g));
   side.querySelectorAll('[data-x]').forEach(e=>e.onclick=()=>{S.dismissed[e.dataset.x]=true;save();renderSide();});
   side.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
@@ -3689,12 +3865,10 @@ function diasEmAberto(){
   return out.reverse();
 }
 function livroAcabando(){
-  for(const t of (S.trackers||[])){
-    const it=t.item||{}; if(!it.title||!it.total||!t.dailyGoal) continue;
-    const left=Math.max(0,it.total-(it.done||0));
-    if(left<=Math.max(20,t.dailyGoal*2)) return {id:t.id,titulo:it.title,left,unit:t.unit};
-  }
-  return null;
+  const l=(S.livros||[]).find(x=>x.status==='lendo');
+  if(!l||!l.paginas) return null;
+  const left=faltam(l);
+  return left<=Math.max(20,metaPag()*2) ? {id:l.id,titulo:l.titulo,left,unit:'páginas'} : null;
 }
 function nagBar(){
   const pend=diasEmAberto();
@@ -3710,7 +3884,7 @@ function nagBar(){
         ? `Você chegou ao fim de <b>${esc(livro.titulo)}</b>. Feche-o e escolha o próximo — estante vazia é hábito que morre.`
         : `<b>${esc(livro.titulo)}</b> está acabando. Já vale decidir qual vem depois.`}</span>
       <button class="b sm" id="nagLivro">${livro.left===0?'Concluir e escolher':'Escolher o próximo'}</button>`;
-    el.querySelector('#nagLivro').onclick=()=>trackerModal(livro.id);
+    el.querySelector('#nagLivro').onclick=()=>{ setView('livros'); livrosModalNovo(); };
     return;
   }
   if(!pend.length){ if(el) el.remove(); document.body.classList.remove('hasnag'); return; }
@@ -3771,6 +3945,12 @@ function closeDayModal(dISO){
   md.innerHTML=`<h3>Fechar ${fmtL(dRef)}${hoje?'':' <span style="font-weight:400;color:var(--ink3);font-size:13px">(retroativo)</span>'}</h3>
     <div class="gbar" style="height:5px"><i style="width:${rate}%"></i></div>
     <p style="font-size:12.5px;color:var(--ink3);margin:7px 0 16px">${dn} de ${it.length} atividades concluídas · ${rate}%</p>
+    ${(()=>{ const at=lendoAgora()[0];
+      return `<label class="fld"><span>Páginas lidas hoje${at?' — '+esc(at.titulo):''}</span>
+        <input type="number" id="cPg" value="${at?((at.log||{})[k]||0):0}" min="0"
+          ${at?'':'disabled placeholder="cadastre um livro na aba Livros"'}></label>
+        ${at?`<p class="hint" style="margin-top:-4px">Meta ${metaPag()} páginas/dia · faltam ${faltam(at)} para terminar.</p>`
+            :`<p class="hint" style="margin-top:-4px">Nenhum livro em andamento — abra a aba <b>Livros</b>.</p>`}`;})()}
     ${(S.trackers||[]).filter(t=>t.item&&t.item.title).map(t=>
       `<label class="fld"><span>${esc(t.unit)} de ${esc(t.label).toLowerCase()} hoje</span>
         <input type="number" data-u="${t.id}" value="${(t.log||{})[k]||0}" min="0"></label>`).join('')}
@@ -3779,6 +3959,8 @@ function closeDayModal(dISO){
     <div class="acts"><button class="b" id="cx">Cancelar</button><button class="b solid" id="co">Fechar dia</button></div>`;
   md.querySelector('#cx').onclick=shut;
   md.querySelector('#co').onclick=()=>{
+    const cpg=md.querySelector('#cPg'), _at=lendoAgora()[0];
+    if(cpg&&!cpg.disabled&&_at) logPaginas(_at.id,k,Math.max(0,+cpg.value||0));
     md.querySelectorAll('[data-u]').forEach(i=>logUnits(trk(i.dataset.u),Math.max(0,+i.value||0),k));
     S.closed=S.closed||{}; S.closed[k]={rate,note:md.querySelector('#cn').value};
     save(); shut(); paint();
@@ -4112,7 +4294,7 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden) checkAle
      · registros (conclusões, água, leitura, dias fechados)
        → UNIÃO, nunca sobrescrita. É o dado que dói perder.
    ═══════════════════════════════════════════════════════ */
-const APP_VER='2026-08-16.5';
+const APP_VER='2026-08-21.1';
 const CLOUD_KEY='planner_cloud';
 let sb=null, sbUser=null, cloudState='off', cloudTimer=null, cloudPending=false, provs=null;
 
@@ -4517,6 +4699,330 @@ function nuvemModal(){
 }
 
 /* ═══════════════════════════════════════════════════════
+   16 · LIVROS
+   Substitui o antigo "hábito de leitura", que confundia
+   porque o livro ficava escondido dentro de um tracker
+   genérico e sumia da tela de fechar o dia quando não
+   havia nada cadastrado.
+
+   Uma única fonte de verdade: a página atual é sempre
+   offset + soma do que você registrou por dia.
+   ═══════════════════════════════════════════════════════ */
+const LSTATUS={lendo:'Lendo agora',lido:'Terminado',quero:'Quero ler',parado:'Parado'};
+
+const livros      = ()=>S.livros||(S.livros=[]);
+const livroPorId  = id=>livros().find(l=>l.id===id);
+const lendoAgora  = ()=>livros().filter(l=>l.status==='lendo');
+const lidos       = ()=>livros().filter(l=>l.status==='lido')
+                      .sort((a,b)=>(b.fim||'').localeCompare(a.fim||''));
+const querLer     = ()=>livros().filter(l=>l.status==='quero');
+const metaPag     = ()=>Math.max(1,(S.leitura&&S.leitura.metaDia)||10);
+
+const lidasNoLivro = l=>Object.values(l.log||{}).reduce((a,b)=>a+(+b||0),0);
+const paginaAtual  = l=>Math.min(l.paginas||1e9,(l.offset||0)+lidasNoLivro(l));
+const faltam       = l=>Math.max(0,(l.paginas||0)-paginaAtual(l));
+const pctLivro     = l=>l.paginas?Math.min(100,Math.round(paginaAtual(l)/l.paginas*100)):0;
+
+/** Páginas registradas num dia, somando todos os livros. */
+function paginasDoDia(k){
+  return livros().reduce((a,l)=>a+((l.log||{})[k]||0),0);
+}
+/** Dias em que houve leitura, e a média por dia de leitura. */
+function ritmoLeitura(dias){
+  const hoje=TODAY(); let total=0, comLeitura=0;
+  const janela=dias||30;
+  for(let i=0;i<janela;i++){
+    const p=paginasDoDia(iso(addD(hoje,-i)));
+    if(p>0){ total+=p; comLeitura++; }
+  }
+  return {total, dias:comLeitura, media:comLeitura?total/comLeitura:0};
+}
+function diasDoLivro(l){
+  if(!l.inicio) return 0;
+  const fim=l.fim?pISO(l.fim):TODAY();
+  return Math.max(1,Math.round((fim-pISO(l.inicio))/864e5)+1);
+}
+function mediaDoLivro(l){
+  const d=diasDoLivro(l); return d?lidasNoLivro(l)/d:0;
+}
+
+function logPaginas(id,k,n){
+  const l=livroPorId(id); if(!l) return;
+  l.log=l.log||{};
+  n=Math.max(0,Math.round(n));
+  if(n) l.log[k]=n; else delete l.log[k];
+  if(!l.inicio) l.inicio=k;
+  if(l.paginas && paginaAtual(l)>=l.paginas && l.status==='lendo'){
+    l.status='lido'; l.fim=k;
+    setTimeout(()=>toast(`Você terminou <b>${esc(l.titulo)}</b> em ${diasDoLivro(l)} dias. Escolha o próximo.`,true,livrosModalNovo),400);
+  }
+  save();
+}
+function comecarLivro(id){
+  const l=livroPorId(id); if(!l) return;
+  l.status='lendo'; if(!l.inicio) l.inicio=iso(TODAY()); l.fim=null; save(); paint();
+}
+function terminarLivro(id){
+  const l=livroPorId(id); if(!l) return;
+  l.status='lido'; l.fim=iso(TODAY());
+  if(l.paginas) l.offset=Math.max(0,l.paginas-lidasNoLivro(l));
+  save(); paint();
+  toast(`<b>${esc(l.titulo)}</b> para a estante: ${diasDoLivro(l)} dias, média de ${mediaDoLivro(l).toFixed(1)} páginas por dia.`,true);
+}
+
+/* ── Google Books ──────────────────────────────────────
+   A busca de dados públicos funciona sem chave, limitada
+   por IP. Se um dia começar a recusar, dá para pôr uma
+   chave em config.js (window.PLANNER_CFG.googleKey).   */
+async function buscarLivros(q){
+  const key=(window.PLANNER_CFG&&window.PLANNER_CFG.googleKey)||'';
+  const url='https://www.googleapis.com/books/v1/volumes?q='+encodeURIComponent(q)
+    +'&maxResults=12&printType=books'+(key?'&key='+key:'');
+  const r=await fetch(url);
+  if(!r.ok) throw new Error('busca indisponível ('+r.status+')');
+  const j=await r.json();
+  return (j.items||[]).map(v=>{
+    const i=v.volumeInfo||{};
+    const im=i.imageLinks||{};
+    return {gid:v.id, titulo:i.title||'(sem título)',
+      autor:(i.authors||[]).join(', '),
+      paginas:i.pageCount||0,
+      capa:(im.thumbnail||im.smallThumbnail||'').replace(/^http:/,'https:'),
+      ano:(i.publishedDate||'').slice(0,4)};
+  });
+}
+
+/** Quantos livros ainda cabem até o fim do protocolo. */
+function projecaoLivros(){
+  const inf=protoInfo(), meta=metaPag();
+  const paginasRestantes=inf.left*meta;
+  const atual=lendoAgora()[0];
+  const faltaAtual=atual?faltam(atual):0;
+  const fila=querLer();
+  const medias=[...fila.map(l=>l.paginas||0),...lidos().map(l=>l.paginas||0)].filter(Boolean);
+  const tamMedio=medias.length?medias.reduce((a,b)=>a+b,0)/medias.length:320;
+  const sobra=Math.max(0,paginasRestantes-faltaAtual);
+  const inteiros=(atual&&faltaAtual<=paginasRestantes?1:0)+Math.floor(sobra/tamMedio);
+  const texto = inf.left<=0 ? 'protocolo encerrado'
+    : `${nfmt(paginasRestantes)} páginas cabem nos ${inf.left} dias que restam, a ${meta}/dia — cerca de ${Math.round(tamMedio)} páginas por livro`;
+  return {paginasRestantes, faltaAtual, tamMedio, inteiros, texto, dias:inf.left, meta};
+}
+const paginasTotais = ()=>livros().reduce((a,l)=>a+lidasNoLivro(l),0);
+
+/* ── Tela ─────────────────────────────────────────────── */
+function capaHTML(l,cls){
+  if(l.capa) return `<img class="cap ${cls||''}" src="${esc(l.capa)}" alt="" loading="lazy">`;
+  const ini=(l.titulo||'?').trim()[0]||'?';
+  return `<div class="cap sem ${cls||''}"><span>${esc(ini.toUpperCase())}</span></div>`;
+}
+
+function renderLivros(){
+  const atual=lendoAgora(), fila=querLer(), feitos=lidos();
+  const r=ritmoLeitura(30), pj=projecaoLivros();
+  const hoje=paginasDoDia(iso(TODAY())), meta=metaPag();
+  const anoAtual=new Date().getFullYear();
+  const noAno=feitos.filter(l=>(l.fim||'').startsWith(anoAtual)).length;
+
+  let h=`<div class="livros"><div class="wrap">
+    <div class="dhead">
+      <div><div class="since">Estante</div><h1>Livros</h1></div>
+      <div class="dsum">
+        <div><span class="num">${hoje}/${meta}</span><small>páginas hoje</small></div>
+        <div><span class="num">${feitos.length}</span><small>terminados</small></div>
+        <div><span class="num">${r.media.toFixed(1)}</span><small>média por dia de leitura</small></div>
+      </div>
+    </div>
+
+    <div class="lbar">
+      <button class="b solid" id="lNovo">+ Adicionar livro</button>
+      <label class="f2">meta por dia
+        <input type="number" id="lMeta" value="${meta}" min="1" style="width:58px"></label>
+    </div>`;
+
+  /* lendo agora */
+  h+=`<div class="sect"><h2>Lendo agora</h2>`;
+  if(!atual.length) h+=`<p class="cx">Nenhum livro em andamento. Clique em <b>Adicionar livro</b> — dá para buscar pelo título e o sistema puxa capa e número de páginas.</p>`;
+  atual.forEach(l=>{
+    const p=pctLivro(l), f=faltam(l), m=mediaDoLivro(l);
+    const diasFalta=f>0?Math.ceil(f/meta):0;
+    const hojeL=(l.log||{})[iso(TODAY())]||0;
+    h+=`<div class="lcard" data-l="${l.id}">
+      ${capaHTML(l,'g')}
+      <div class="linfo">
+        <div class="ltit">${esc(l.titulo)}</div>
+        <div class="laut">${esc(l.autor||'')}${l.ano?' · '+l.ano:''}</div>
+        <div class="lprog"><i style="width:${p}%"></i></div>
+        <div class="lnum"><b>${paginaAtual(l)}</b> de ${l.paginas||'?'} páginas · ${p}%
+          ${f?` · faltam ${f}`:''}</div>
+        <div class="lmeta">
+          ${l.inicio?`começou ${fmtS(pISO(l.inicio))} · ${diasDoLivro(l)} dias · ${m.toFixed(1)} pág/dia`:'ainda não começou'}
+          ${diasFalta?` · no ritmo da meta termina ${fmtS(addD(TODAY(),diasFalta))}`:''}
+        </div>
+        <div class="lacts">
+          <span class="lhoje">hoje</span>
+          <button class="b xs line" data-p="${l.id}:5">+5</button>
+          <button class="b xs line" data-p="${l.id}:10">+10</button>
+          <button class="b xs line" data-p="${l.id}:20">+20</button>
+          <input type="number" class="num" data-pv="${l.id}" value="${hojeL}" min="0">
+          <button class="b xs" data-ed="${l.id}">editar</button>
+          <button class="b xs line" data-fim="${l.id}">terminei</button>
+        </div>
+      </div>
+    </div>`;
+  });
+  h+=`</div>`;
+
+  /* projeção */
+  h+=`<div class="card2 full"><h2>Até o fim do Protocolo ${S.protocol.days}</h2>
+    <p class="cx">Faltam <b>${pj.dias} dias</b>. Lendo <b>${pj.meta} páginas por dia</b>, isso dá
+    <b>${pj.paginasRestantes.toLocaleString('pt-BR')} páginas</b>
+    ${pj.faltaAtual?` — descontando as ${pj.faltaAtual} que faltam no livro atual`:''}.
+    Com livros de ${Math.round(pj.tamMedio)} páginas em média, dá para terminar cerca de
+    <b>${pj.inteiros} livro${pj.inteiros===1?'':'s'}</b>.</p>
+    <div class="lproj">${(()=>{
+      const marcas=[];
+      let restante=pj.paginasRestantes, d=0;
+      const lista=[...(atual.length?[{...atual[0],_falta:faltam(atual[0])}]:[]),
+                   ...fila.map(l=>({...l,_falta:l.paginas||Math.round(pj.tamMedio)}))];
+      lista.forEach(l=>{
+        if(restante<=0) return;
+        d+=Math.ceil(l._falta/pj.meta); restante-=l._falta;
+        marcas.push(`<div class="lpj${restante>=0?'':' fora'}">
+          ${capaHTML(l,'p')}<div><b>${esc(l.titulo)}</b>
+          <small>${restante>=0?'termina por volta de '+fmtS(addD(TODAY(),d)):'não cabe no protocolo'}</small></div></div>`);
+      });
+      return marcas.join('')||'<p class="cx">Adicione livros em "Quero ler" para ver a projeção.</p>';
+    })()}</div></div>`;
+
+  /* quero ler */
+  h+=`<div class="sect"><h2>Quero ler <span style="color:var(--ink4)">${fila.length}</span></h2>`;
+  if(!fila.length) h+=`<p class="cx">Sua lista de desejos está vazia. Adicione livros aqui e o sistema calcula quantos cabem nos ${S.protocol.days} dias.</p>`;
+  else { h+='<div class="lgrid">';
+    fila.forEach(l=>h+=`<div class="lmini" data-l="${l.id}">${capaHTML(l,'m')}
+      <div class="lmt">${esc(l.titulo)}</div>
+      <div class="lma">${esc(l.autor||'')}${l.paginas?' · '+l.paginas+' pág':''}</div>
+      <div class="lmb"><button class="b xs line" data-go="${l.id}">começar</button>
+        <button class="b xs" data-ed="${l.id}">editar</button></div></div>`);
+    h+='</div>'; }
+  h+='</div>';
+
+  /* terminados */
+  h+=`<div class="sect"><h2>Terminados <span style="color:var(--ink4)">${feitos.length} · ${noAno} em ${anoAtual}</span></h2>`;
+  if(!feitos.length) h+=`<p class="cx">Nenhum ainda. O primeiro vai aparecer aqui com a data e quantos dias levou.</p>`;
+  else { h+='<div class="lgrid">';
+    feitos.forEach(l=>h+=`<div class="lmini done" data-l="${l.id}">${capaHTML(l,'m')}
+      <div class="lmt">${esc(l.titulo)}</div>
+      <div class="lma">${l.fim?fmtS(pISO(l.fim))+'/'+pISO(l.fim).getFullYear():''}
+        ${l.inicio?' · '+diasDoLivro(l)+' dias':''}</div>
+      <div class="lma">${l.paginas?l.paginas+' pág · '+mediaDoLivro(l).toFixed(1)+'/dia':''}</div>
+      <div class="lmb"><button class="b xs" data-ed="${l.id}">editar</button></div></div>`);
+    h+='</div>'; }
+  h+='</div>';
+
+  h+='</div></div>';
+  document.getElementById('main').innerHTML=h;
+
+  document.getElementById('lNovo').onclick=livrosModalNovo;
+  document.getElementById('lMeta').onchange=e=>{
+    S.leitura=S.leitura||{}; S.leitura.metaDia=Math.max(1,+e.target.value||10); save(); paint(); };
+  document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{
+    const [id,n]=b.dataset.p.split(':'); const k=iso(TODAY());
+    logPaginas(id,k,((livroPorId(id).log||{})[k]||0)+ +n); paint(); });
+  document.querySelectorAll('[data-pv]').forEach(i=>i.onchange=()=>{
+    logPaginas(i.dataset.pv,iso(TODAY()),+i.value||0); paint(); });
+  document.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>livroModal(b.dataset.ed));
+  document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>comecarLivro(b.dataset.go));
+  document.querySelectorAll('[data-fim]').forEach(b=>b.onclick=()=>{
+    if(confirm('Marcar como terminado?')) terminarLivro(b.dataset.fim); });
+}
+
+/* ── Adicionar: busca no Google ou manual ── */
+function livrosModalNovo(){
+  md.innerHTML=`<h3>Adicionar livro</h3>
+    <div class="cent">
+      <input id="bq" placeholder="título, autor ou ISBN" autocomplete="off">
+      <button class="b sm solid" id="bGo">Buscar</button>
+    </div>
+    <p class="hint">Busca no acervo do Google Books — traz capa, autor e número de páginas.</p>
+    <div id="bres" class="bres"></div>
+    <div class="acts">
+      <button class="b left" id="bMan">Cadastrar na mão</button>
+      <button class="b" id="bX">Fechar</button></div>`;
+  const q=md.querySelector('#bq'), res=md.querySelector('#bres');
+  const buscar=async()=>{
+    const termo=q.value.trim(); if(!termo) return;
+    res.innerHTML='<p class="cx">Buscando…</p>';
+    try{
+      const lista=await buscarLivros(termo);
+      if(!lista.length){ res.innerHTML='<p class="cx">Nada encontrado. Tente outro termo ou cadastre na mão.</p>'; return; }
+      res.innerHTML=lista.map((l,i)=>`<div class="bri" data-i="${i}">
+        ${capaHTML(l,'p')}<div><b>${esc(l.titulo)}</b>
+        <small>${esc(l.autor||'autor desconhecido')}${l.ano?' · '+l.ano:''}${l.paginas?' · '+l.paginas+' páginas':' · páginas não informadas'}</small></div>
+        <div class="brb"><button class="b xs line" data-add="${i}:lendo">ler agora</button>
+        <button class="b xs" data-add="${i}:quero">quero ler</button></div></div>`).join('');
+      res.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
+        const [i,st]=b.dataset.add.split(':');
+        const l=lista[+i];
+        livros().push({id:uid('l'),gid:l.gid,titulo:l.titulo,autor:l.autor,
+          paginas:l.paginas||0,capa:l.capa,ano:l.ano,status:st,
+          inicio:st==='lendo'?iso(TODAY()):null,fim:null,log:{},offset:0});
+        save(); shut(); paint();
+        toast(st==='lendo'?`Boa leitura. Registre as páginas no fim do dia.`:'Adicionado à lista de desejos.');
+      });
+    }catch(e){ res.innerHTML=`<p class="cx">Não consegui buscar agora (${esc(e.message)}). Use "Cadastrar na mão".</p>`; }
+  };
+  md.querySelector('#bGo').onclick=buscar;
+  q.onkeydown=e=>{ if(e.key==='Enter') buscar(); };
+  md.querySelector('#bMan').onclick=()=>livroModal(null);
+  md.querySelector('#bX').onclick=shut;
+  pop(true);
+  setTimeout(()=>q.focus(),50);
+}
+
+/* ── Editar / cadastrar manualmente ── */
+function livroModal(id){
+  const l=id?livroPorId(id):{titulo:'',autor:'',paginas:0,capa:'',status:'lendo',
+    inicio:iso(TODAY()),fim:null,log:{},offset:0};
+  const novo=!id;
+  md.innerHTML=`<h3>${novo?'Cadastrar livro':esc(l.titulo)}</h3>
+    <label class="fld"><span>Título</span><input id="lt" value="${esc(l.titulo)}"></label>
+    <div class="row2">
+      <label class="fld"><span>Autor</span><input id="la" value="${esc(l.autor||'')}"></label>
+      <label class="fld"><span>Total de páginas</span><input type="number" id="lp" value="${l.paginas||0}" min="0"></label>
+    </div>
+    <div class="row2">
+      <label class="fld"><span>Situação</span><select id="ls">${Object.entries(LSTATUS).map(([k,v])=>
+        `<option value="${k}" ${l.status===k?'selected':''}>${v}</option>`).join('')}</select></label>
+      <label class="fld"><span>Já lidas antes de registrar</span><input type="number" id="lo" value="${l.offset||0}" min="0"></label>
+    </div>
+    <div class="row2">
+      <label class="fld"><span>Comecei em</span><input type="date" id="li" value="${l.inicio||''}"></label>
+      <label class="fld"><span>Terminei em</span><input type="date" id="lf" value="${l.fim||''}"></label>
+    </div>
+    <label class="fld"><span>Capa (endereço da imagem)</span><input id="lc" value="${esc(l.capa||'')}" placeholder="opcional"></label>
+    ${!novo&&Object.keys(l.log||{}).length?`<p class="hint">${Object.keys(l.log).length} dia(s) de registro, ${lidasNoLivro(l)} páginas somadas.</p>`:''}
+    <div class="acts">
+      ${novo?'':'<button class="b danger left" id="lDel">Remover</button>'}
+      <button class="b" id="lX">Cancelar</button>
+      <button class="b solid" id="lOk">Salvar</button></div>`;
+  md.querySelector('#lX').onclick=shut;
+  const del=md.querySelector('#lDel');
+  if(del) del.onclick=()=>{
+    if(!confirm('Remover este livro e o histórico de páginas dele?'))return;
+    comDesfazer(`"${l.titulo}" removido da estante`,()=>{
+      S.livros=livros().filter(x=>x.id!==id); save(); shut(); paint(); }); };
+  md.querySelector('#lOk').onclick=()=>{
+    const g=s=>md.querySelector(s).value;
+    const t=g('#lt').trim(); if(!t){ alert('Dá um título.'); return; }
+    const dados={titulo:t,autor:g('#la').trim(),paginas:+g('#lp')||0,
+      status:g('#ls'),offset:+g('#lo')||0,inicio:g('#li')||null,fim:g('#lf')||null,capa:g('#lc').trim()};
+    if(novo) livros().push({id:uid('l'),log:{},...dados});
+    else Object.assign(l,dados);
+    save(); shut(); paint(); };
+  pop();
+}
+
+/* ═══════════════════════════════════════════════════════
    14 · INIT
    ═══════════════════════════════════════════════════════ */
 /* ── Desfazer ──────────────────────────────────────────
@@ -4569,7 +5075,7 @@ function toast(msg,big,action){
 }
 function setView(v){ view=v; S.view=v; save(); paint(); }
 function shift(n){
-  if(view==='home') return;
+  if(view==='home'||view==='livros') return;
   cur = view==='day'  ? addD(cur,n)
       : view==='week' ? addD(cur,7*n)
       : new Date(cur.getFullYear(),cur.getMonth()+n,1);
@@ -4586,7 +5092,7 @@ document.getElementById('cloud').onclick=nuvemModal;
 document.querySelectorAll('.seg .b').forEach(b=>b.onclick=()=>setView(b.dataset.v));
 document.addEventListener('keydown',e=>{
   if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;
-  const map={h:'home',j:'day',w:'week',m:'month'};
+  const map={h:'home',j:'day',w:'week',m:'month',l:'livros'};
   if(map[e.key]) setView(map[e.key]);
   if(e.key==='t'){cur=TODAY();paint();}
   if(e.key==='n') editor(null,iso(cur),'09:00');
@@ -4615,7 +5121,7 @@ function paint(){
   applyTheme();
   const antigo=document.querySelector('.day,.proto,.home,.mo');
   if(antigo) _pageY[view]=antigo.scrollTop;
-  document.getElementById('period').textContent = (view==='home')?'':periodLabel();
+  document.getElementById('period').textContent = (view==='home'||view==='livros')?'':periodLabel();
   document.querySelectorAll('.seg .b').forEach(b=>b.classList.toggle('on',b.dataset.v===view));
   document.getElementById('navGrp').style.display=(view==='home')?'none':'flex';
   document.getElementById('side').style.display = (view==='home'||view==='day'||view==='proto') ? 'none' : '';
@@ -4625,12 +5131,13 @@ function paint(){
   else if(view==='day') renderDay();
   else if(view==='week') renderWeek();
   else if(view==='month') renderMonth();
+  else if(view==='livros') renderLivros();
   else renderWeek();
   const novo=document.querySelector('.day,.proto,.home,.mo');
   if(novo && _pageY[view]) novo.scrollTop=_pageY[view];
   renderSide(); paintSync(); nagBar(); pintaUndo();
 }
-ensureRealista(); ensureLevels(); ensureExtras(); ensureOut(); ensureAlertas();
+ensureRealista(); ensureLevels(); ensureExtras(); ensureOut(); ensureAlertas(); ensureLivros();
 paint(); pomoPaint();
 window.addEventListener('load',()=>{ setTimeout(async()=>{
   await cloudInit();

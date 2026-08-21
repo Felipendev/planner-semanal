@@ -11,7 +11,3 @@
    → API Keys. Use a "Publishable key" ou a "anon / public".
    NUNCA a "secret" nem a "service_role".
    ═══════════════════════════════════════════════════════════ */
-window.PLANNER_CFG = {
-  url: "https://smhpomzcsucyriacmncz.supabase.co",
-  key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtaHBvbXpjc3VjeXJpYWNtbmN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MTk0NDMsImV4cCI6MjEwMjQ5NTQ0M30.sZt6qo5gt_1T-HLXWg67XEwSTszhJFMNrL17MVd0fEc"
-};
